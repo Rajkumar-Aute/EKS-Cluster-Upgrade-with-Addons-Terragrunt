@@ -1,6 +1,6 @@
 # 1. Load the global environment variables
 locals {
-  envs_vars = read_terragrunt_config(find_in_parent_folders("env.hcl"))
+  env_vars = read_terragrunt_config(find_in_parent_folders("env.hcl"))
 }
 
 # 2. Point to the shared Terraform code
@@ -22,11 +22,11 @@ dependency "network" {
 # 4. Inject all variables into the Terraform module
 inputs = {
   # Static variables from env.hcl
-  cluster_name              = local.envs_vars.locals.cluster_name
-  cluster_version           = local.envs_vars.locals.cluster_version
-  min_node_groups_nodes     = local.envs_vars.locals.min_node_groups_nodes
-  max_node_groups_nodes     = local.envs_vars.locals.max_node_groups_nodes
-  desired_node_groups_nodes = local.envs_vars.locals.desired_node_groups_nodes
+  cluster_name              = local.env_vars.locals.cluster_name
+  cluster_version           = local.env_vars.locals.cluster_version
+  min_node_groups_nodes     = local.env_vars.locals.min_node_groups_nodes
+  max_node_groups_nodes     = local.env_vars.locals.max_node_groups_nodes
+  desired_node_groups_nodes = local.env_vars.locals.desired_node_groups_nodes
 
   # Dynamic variables from the Network dependency
   vpc_id     = dependency.network.outputs.vpc_id

@@ -2,7 +2,7 @@
 
 # 1. Load the global environment variables
 locals {
-  envs_vars = read_terragrunt_config(find_in_parent_folders("env.hcl"))
+  env_vars = read_terragrunt_config(find_in_parent_folders("env.hcl"))
 }
 
 # 2. Point to the shared Terraform code
@@ -12,9 +12,9 @@ terraform {
 
 # 3. Inject variables into the Network module
 inputs = {
-  aws_region    =   local.envs_vars.locals.aws_region
-  cluster_name = local.envs_vars.locals.cluster_name
-  cluster_version   =   local.envs_vars.locals.cluster_version
+  aws_region    =   local.env_vars.locals.aws_region
+  cluster_name = local.env_vars.locals.cluster_name
+  cluster_version   =   local.env_vars.locals.cluster_version
   
   
 }
