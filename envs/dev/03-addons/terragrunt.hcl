@@ -1,0 +1,50 @@
+# environments/dev/03-addons/terragrunt.hcl
+
+# 1. Load the global environment variables
+locals {
+  envs_vars = read_terragrunt_config(find_in_parent_folders("env.hcl"))
+}
+
+# 2. Point to the shared Terraform code and define the automated cleanup hook
+terraform {
+  source = "../../../modules/03-addons"
+}
+
+# 3. Fetch dynamic outputs from the Cluster Layer
+dependency "cluster" {
+  config_path = "../02-cluster"
+
+  # Mocks allow 'terragrunt validate' or 'plan' to work even if the cluster isn't built yet
+  mock_outputs = {
+    cluster_endpoint                   = "https://mock.eks.amazonaws.com"
+    cluster_certificate_authority_data = "bW9jaw=="
+    cluster_name                       = "mock-cluster"
+    oidc_provider_arn                  = "arn:aws:iam::123456789012:oidc-provider/mock"
+    karpenter_iam_role_arn             = "arn:aws:iam::123456789012:role/mock"
+    karpenter_queue_name               = "mock-queue"
+  }
+}
+
+# 4. Inject all variables into the Addons module
+inputs = {
+  # Static versions and region from env.hcl
+  aws_region                    = local.envs_vars.locals.aws_region
+  cluster_name                  = local.envs_vars.locals.cluster_name
+  karpenter_version             = local.envs_vars.locals.karpenter_version
+  cert_manager_version          = local.envs_vars.locals.cert_manager_version
+  nginx_ingress_version         = local.envs_vars.locals.nginx_ingress_version
+  aws_lbc_version               = local.envs_vars.locals.aws_lbc_version
+  external_dns_version          = local.envs_vars.locals.external_dns_version
+  external_secrets_version      = local.envs_vars.locals.external_secrets_version
+  kyverno_version               = local.envs_vars.locals.kyverno_version
+  trivy_operator_version        = local.envs_vars.locals.trivy_operator_version
+  metrics_server_version        = local.envs_vars.locals.metrics_server_version
+  kube_prometheus_stack_version = local.envs_vars.locals.kube_prometheus_stack_version
+
+  # Dynamic values from the Cluster dependency
+  cluster_endpoint                   = dependency.cluster.outputs.cluster_endpoint
+  cluster_certificate_authority_data = dependency.cluster.outputs.cluster_certificate_authority_data
+  oidc_provider_arn                  = dependency.cluster.outputs.oidc_provider_arn
+  karpenter_iam_role_arn             = dependency.cluster.outputs.karpenter_iam_role_arn
+  karpenter_queue_name               = dependency.cluster.outputs.karpenter_queue_name
+}
