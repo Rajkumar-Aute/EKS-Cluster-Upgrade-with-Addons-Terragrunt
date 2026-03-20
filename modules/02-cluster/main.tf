@@ -20,6 +20,17 @@ module "eks" {
     support_type = "STANDARD"
   }
 
+  # create_cloudwatch_log_group = true  
+  # cloudwatch_log_group_retention_in_days = 1   # Optional: Set a short retention to save costs
+
+  create_cloudwatch_log_group = false
+  create_kms_key              = false
+  
+  # Tell EKS not to use managed encryption for now
+  cluster_encryption_config = {}
+
+
+
   # Allow public access to the Kubernetes API server
   cluster_endpoint_public_access = true
 

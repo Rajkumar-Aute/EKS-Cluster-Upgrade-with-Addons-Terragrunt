@@ -1,35 +1,17 @@
 # Root Terragrunt Configuration
+# This tells Terragrunt: "No matter where I am, put the cache in ./tg"
+download_dir = "./tg"
 
 # Generate the aws provider for all directories
 generate "provider" {
   path      = "provider.tf"
   if_exists = "overwrite_terragrunt"
   contents  = <<EOF
-provider "aws" {
-  region = "us-east-1"
-  default_tags {
-    tags = {
-      Project     = "EKS-Upgrade-lab-Setup"
-      Environment = "sandbox"
-      ManagedBy   = "Terraform"
-      CostCenter  = "Learning"
-    }
-  }
-}
-
 terraform {
   required_providers {
-    helm = {
-      source  = "hashicorp/helm"
-      version = ">= 2.12"
-    }
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = ">= 2.27"
-    }
-    kubectl = {
-      source  = "gavinbunney/kubectl"
-      version = ">= 1.14"
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
     }
   }
 }
@@ -76,6 +58,11 @@ inputs = {
   aws_region                = "us-east-1"
   cluster_name              = "EKS-upgrade-lab"
   
+  # Node Group Sizing
+  min_node_groups_nodes     = 2
+  max_node_groups_nodes     = 2
+  desired_node_groups_nodes = 2
+  
   # UPGRADE PRACTICE: Change these values to upgrade the stack
   cluster_version           = "1.34"  # Change to 1.35
   
@@ -89,9 +76,4 @@ inputs = {
   trivy_operator_version    = "0.20.1"  # Change to 0.21.0
   metrics_server_version    = "3.12.1"  # Change to 3.12.2
   kube_prometheus_stack_version = "58.2.2" # Change to 61.3.0
-  
-  # Node Group Sizing
-  min_node_groups_nodes     = 2
-  max_node_groups_nodes     = 2
-  desired_node_groups_nodes = 2
 }

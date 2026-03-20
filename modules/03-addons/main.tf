@@ -1,15 +1,8 @@
+# Kubernetes addons are pre built apps that runs on top of the EKS cluster and provide additional functionality.action.
 
 ##### Karpenter starts here #####
+# Karpenter
 # Retrieve the authentication token to pull the Karpenter image from AWS Public ECR
-
-
-
-
-
-
-
-
-
 
 data "aws_ecrpublic_authorization_token" "token" {}
 
@@ -23,6 +16,12 @@ resource "helm_release" "karpenter" {
   repository_password = data.aws_ecrpublic_authorization_token.token.password
   chart               = "karpenter"
   version             = var.karpenter_version
+
+  force_update      = true
+  recreate_pods     = true
+  cleanup_on_fail   = true
+  atomic            = false
+
 
   values = [
     <<-EOT
@@ -113,7 +112,15 @@ resource "helm_release" "cert_manager" {
   namespace        = "cert-manager"
   create_namespace = true
   version          = var.cert_manager_version
+  
+  
+  force_update    = true 
+  cleanup_on_fail = true
+  replace         = true
+  atomic          = false
+  timeout         = 600
 
+  wait = true
 
   # CRITICAL SETTING: Install Custom Resource Definitions (CRDs)
   # cert-manager relies on custom Kubernetes objects like 'Certificates' 
@@ -185,10 +192,11 @@ module "ebs_csi_irsa_role" {
 resource "aws_eks_addon" "ebs_csi_driver" {
   cluster_name             = var.cluster_name
   addon_name               = "aws-ebs-csi-driver"
+  # Check addon_version            = var.ebs_csi_version
   service_account_role_arn = module.ebs_csi_irsa_role.iam_role_arn
 
-  resolve_conflicts_on_update = "PRESERVE"
   resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "OVERWRITE"
 }
 
 
@@ -252,7 +260,9 @@ resource "helm_release" "nginx_ingress" {
   namespace        = "ingress-nginx"
   create_namespace = true
   version          = var.nginx_ingress_version
-
+  force_update      = true 
+  cleanup_on_fail   = true
+  replace           = true
 
   # The magic happens in these annotations. They tell the AWS Load 
   # Balancer Controller to build a single, high-performance Network 
@@ -315,6 +325,9 @@ resource "helm_release" "aws_load_balancer_controller" {
   chart      = "aws-load-balancer-controller"
   namespace  = "kube-system"
   version    = var.aws_lbc_version
+  force_update      = true 
+  cleanup_on_fail   = true
+  replace           = true
 
   # Pass the cluster name and the newly created IAM role ARN to the Helm chart
   values = [
@@ -360,6 +373,9 @@ resource "helm_release" "external_dns" {
   chart      = "external-dns"
   namespace  = "kube-system"
   version    = var.external_dns_version
+  force_update      = true 
+  cleanup_on_fail   = true
+  replace           = true
 
   values = [
     <<-EOT
@@ -415,6 +431,9 @@ resource "helm_release" "external_secrets" {
   namespace        = "external-secrets"
   create_namespace = true
   version          = var.external_secrets_version
+  force_update      = true 
+  cleanup_on_fail   = true
+  replace           = true
 
   # Use values to install CRDs and attach the IAM role we just created
   values = [
@@ -518,10 +537,12 @@ resource "helm_release" "kyverno_policies" {
   namespace  = "kyverno"
   version    = var.kyverno_version
 
-
+  force_update      = true 
+  cleanup_on_fail   = true
+  replace           = true
   atomic          = true
-  cleanup_on_fail = true
-  timeout         = 60
+
+  timeout         = 600
 
   values = [
     <<-EOT
@@ -553,6 +574,9 @@ resource "helm_release" "trivy_operator" {
   version          = var.trivy_operator_version
 
   # Proactively give Karpenter 10 minutes to provision nodes if needed
+  force_update      = true 
+  cleanup_on_fail   = true
+  replace           = true
   timeout          = 600
 
   # -------------------------------------------------------------
@@ -590,6 +614,9 @@ resource "helm_release" "metrics_server" {
   chart            = "metrics-server"
   namespace        = "kube-system"
   version          = var.metrics_server_version
+  force_update      = true 
+  cleanup_on_fail   = true
+  replace           = true
 
   # -------------------------------------------------------------
   # We use 'values' here to pass raw YAML. 
