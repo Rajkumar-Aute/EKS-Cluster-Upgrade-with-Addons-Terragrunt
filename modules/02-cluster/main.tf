@@ -25,6 +25,7 @@ module "eks" {
 
   create_cloudwatch_log_group = false
   create_kms_key              = false
+  cluster_enabled_log_types = []
   
   # Tell EKS not to use managed encryption for now
   cluster_encryption_config = {}
