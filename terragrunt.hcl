@@ -13,6 +13,30 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    helm = {
+      source  = "hashicorp/helm"
+      version = ">= 2.12"
+    }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = ">= 2.27"
+    }
+    kubectl = {
+      source  = "gavinbunney/kubectl"
+      version = ">= 1.14"
+    }
+  }
+}
+
+provider "aws" {
+  region = "us-east-1"
+  default_tags {
+    tags = {
+      Project     = "EKS-Upgrade-lab-Setup"
+      Environment = "sandbox"
+      ManagedBy   = "Terraform"
+      CostCenter  = "Learning"
+    }
   }
 }
 
@@ -38,10 +62,10 @@ provider "kubectl" {
 }
 
 provider "helm" {
-  kubernetes {
+  kubernetes = {
     host                   = var.cluster_endpoint
     cluster_ca_certificate = base64decode(var.cluster_certificate_authority_data)
-    exec {
+    exec = {
       api_version = "client.authentication.k8s.io/v1beta1"
       command     = "aws"
       args        = ["eks", "get-token", "--cluster-name", var.cluster_name]
@@ -50,7 +74,6 @@ provider "helm" {
 }
 EOF
 }
-
 
 
 # GLOBAL VARIABLES (Passed automatically to all child folders)
