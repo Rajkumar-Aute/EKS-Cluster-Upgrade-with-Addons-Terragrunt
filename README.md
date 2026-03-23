@@ -46,6 +46,7 @@ terragrunt run-all apply --terragrunt-non-interactive
 # It will ask for conformation type "y"
 # Terragrunt will automatically build the Network first, followed by the Cluster, and finally the Addons.
 # terragrunt run-all apply --terragrunt-exclude-dir "03-addons"    --terragrunt-non-interactive
+# terragrunt run-all apply --terragrunt-exclude-dir "01-network" --terragrunt-exclude-dir "02-cluster" --terragrunt-exclude-dir "03-addons" --terragrunt-non-interactive
 
 ```
 

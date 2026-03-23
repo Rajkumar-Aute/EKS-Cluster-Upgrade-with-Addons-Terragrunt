@@ -1,5 +1,10 @@
 # environments/dev/01-network/terragrunt.hcl
 
+# This is the "hook" that pulls in the remote_state and providers from the root
+include "root" {
+  path = find_in_parent_folders()
+}
+
 # 1. Load the global environment variables
 locals {
   env_vars = read_terragrunt_config(find_in_parent_folders("env.hcl"))

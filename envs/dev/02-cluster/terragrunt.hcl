@@ -3,6 +3,11 @@ locals {
   env_vars = read_terragrunt_config(find_in_parent_folders("env.hcl"))
 }
 
+# This is the "hook" that pulls in the remote_state and providers from the root
+include "root" {
+  path = find_in_parent_folders()
+}
+
 # 2. Point to the shared Terraform code
 terraform {
   source = "../../../modules/02-cluster"
