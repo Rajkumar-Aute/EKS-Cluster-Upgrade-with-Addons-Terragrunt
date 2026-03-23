@@ -1,7 +1,7 @@
 locals {
   environment  = "dev"
   aws_region   = "us-east-1"
-  cluster_name = "EKS-upgrade-lab"
+  cluster_name    = "eks-upgrade-lab-${local.environment}"
   cluster_version = "1.34"
   
   min_node_groups_nodes = 1

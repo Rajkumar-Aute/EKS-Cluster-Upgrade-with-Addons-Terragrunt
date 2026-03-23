@@ -8,37 +8,37 @@ locals {
 # 2. Point to the shared Terraform code and define the automated cleanup hook
 terraform {
   source = "../../../modules/03-addons"
-  before_hook "clean_ghost_helm_releases" {
-    commands = ["apply"]
-    execute  = [
-      "bash", "-c",
-      <<-EOT
-      # 1. Update kubeconfig
-      aws eks update-kubeconfig --name EKS-upgrade-lab --region us-east-1
-      
-      # 2. Delete the specific webhooks that block installations
-      kubectl delete validatingwebhookconfigurations --all --ignore-not-found
-      kubectl delete mutatingwebhookconfigurations --all --ignore-not-found
-      
-      # 3. Clear any Helm "Pending" secrets that block the release
-      kubectl delete secret -l owner=helm --all-namespaces --ignore-not-found
-      
-      # 4. Force delete stuck pods in Terminating state (optional but helpful)
-      kubectl get pods -A | grep Terminating | awk '{print $2 " --namespace=" $1}' | xargs -I {} kubectl delete pod {} --force --grace-period=0 || true
-      
-      # Clear Helm records that think the release is "failed"
-      kubectl delete secret -l owner=helm,name=cert-manager -n cert-manager --ignore-not-found
-      EOT
-    ]
-  }
+#  before_hook "clean_ghost_helm_releases" {
+#    commands = ["apply"]
+#    execute  = [
+#      "bash", "-c",
+#      <<-EOT
+#      # 1. Update kubeconfig
+#      aws eks update-kubeconfig --name EKS-upgrade-lab --region us-east-1
+#      
+#      # 2. Delete the specific webhooks that block installations
+#      kubectl delete validatingwebhookconfigurations --all --ignore-not-found
+#      kubectl delete mutatingwebhookconfigurations --all --ignore-not-found
+#      
+#      # 3. Clear any Helm "Pending" secrets that block the release
+#      kubectl delete secret -l owner=helm --all-namespaces --ignore-not-found
+#      
+#      # 4. Force delete stuck pods in Terminating state (optional but helpful)
+#      kubectl get pods -A | grep Terminating | awk '{print $2 " --namespace=" $1}' | xargs -I {} kubectl delete pod {} --force --grace-period=0 || true
+#      
+#      # Clear Helm records that think the release is "failed"
+#      kubectl delete secret -l owner=helm,name=cert-manager -n cert-manager --ignore-not-found
+#      EOT
+#    ]
+#  }
 }
 
 # 3. Fetch dynamic outputs from the Cluster Layer
 dependency "cluster" {
   config_path = "../02-cluster"
 
-  mock_outputs_allowed_terraform_commands = ["apply", "plan", "validate", "destroy"]
-  skip_outputs = get_terraform_command() == "destroy" ? true : false
+#  mock_outputs_allowed_terraform_commands = ["apply", "plan", "validate", "destroy"]
+#  skip_outputs = get_terraform_command() == "destroy" ? true : false
   # Mocks allow 'terragrunt validate' or 'plan' to work even if the cluster isn't built yet
   mock_outputs = {
     cluster_endpoint                   = "https://mock.eks.amazonaws.com"

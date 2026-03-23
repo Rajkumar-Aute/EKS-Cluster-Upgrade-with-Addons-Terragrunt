@@ -45,6 +45,7 @@ cd envs/dev
 terragrunt run-all apply --terragrunt-non-interactive
 # It will ask for conformation type "y"
 # Terragrunt will automatically build the Network first, followed by the Cluster, and finally the Addons.
+# terragrunt run-all apply --terragrunt-exclude-dir "03-addons"    --terragrunt-non-interactive
 
 ```
 
@@ -61,7 +62,7 @@ Destroying an EKS cluster with active LoadBalancers and Admission Webhooks usual
 Before you can clean up Kubernetes, ensure your terminal is actively communicating with your EKS control plane.
 
 ```Bash
-aws eks update-kubeconfig --name EKS-upgrade-lab --region us-east-1
+aws eks update-kubeconfig --name EKS-upgrade-lab-<env> --region us-east-1
 ```
 
 ### Step 2: Nuke the Admission Webhooks (Kyverno)
