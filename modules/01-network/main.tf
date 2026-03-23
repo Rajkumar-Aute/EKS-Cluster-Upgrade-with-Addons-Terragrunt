@@ -45,3 +45,9 @@ resource "aws_ec2_tag" "public_subnet_lb_tags" {
   key         = "kubernetes.io/role/elb"
   value       = "1"
 }
+
+
+# resource "aws_route53_zone" "subdomain" {
+#   name    = var.domain_name
+#   comment = "Hosted Zone for EKS Ingress managed by Terraform"
+# }

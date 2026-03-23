@@ -77,3 +77,13 @@ variable "kube_prometheus_stack_version" {
   description = "Helm chart version for Kube-Prometheus-Stack"
   type        = string
 }
+
+# variable "domain_name" {
+#   description = "The domain name to use for the cluster (e.g., eks.devsecopsguru.in)"
+#   type        = string  
+# }
+
+# variable "route53_zone_id" {
+#   description = "The ID of the Route53 zone for the cluster"
+#   type        = string
+# }

@@ -3,6 +3,8 @@ locals {
   aws_region   = "us-east-1"
   cluster_name    = "eks-upgrade-lab-${local.environment}"
   cluster_version = "1.34"
+
+  domain_name = "eks.devsecopsguru.in"
   
   min_node_groups_nodes = 1
   max_node_groups_nodes = 2

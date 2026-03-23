@@ -11,6 +11,7 @@ module "aws_load_balancer_controller_irsa_role" {
   version = "~> 5.30"
 
   role_name = "${var.cluster_name}-aws-lbc"
+  role_name_prefix = null
 
   # This boolean tells the module to attach the official AWS Load Balancer Controller IAM policy
   attach_load_balancer_controller_policy = true
@@ -107,11 +108,14 @@ resource "helm_release" "aws_load_balancer_controller" {
 
 # ##### ExternalDNS starts here #####
 # # 1. Create the IAM Role and Policy for ExternalDNS
+# # Need domain name in route53 to filter the access of external dns to only the relevant hosted zone
 # module "external_dns_irsa_role" {
 #   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
 #   version = "~> 5.30"
 
 #   role_name = "${var.cluster_name}-external-dns"
+#   role_name_prefix = null
+
 
 #   # This built-in flag automatically attaches the AWS-managed policy for Route53 access
 #   attach_external_dns_policy = true
@@ -134,17 +138,16 @@ resource "helm_release" "aws_load_balancer_controller" {
 #   version    = var.external_dns_version
 
 
-#   values = [
+# values = [
 #     <<-EOT
 #     provider: aws
 #     registry: txt
 #     txtOwnerId: ${var.cluster_name}
-#     policy: sync # 'sync' means it will both create and delete records. Use 'upsert-only' if you are nervous about deletions!
-    
-#     # You can restrict ExternalDNS to only manage specific domains so it doesn't touch other Route53 records
+#     policy: sync
 #     domainFilters:
-#       - devsecopsguru.in 
-      
+#       - ${var.domain_name}
+#     zoneIdFilters:
+#       - ${var.route53_zone_id}  # Use the variable here!
 #     serviceAccount:
 #       create: true
 #       name: external-dns

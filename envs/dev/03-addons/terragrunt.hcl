@@ -10,6 +10,14 @@ include "root" {
   path = find_in_parent_folders()
 }
 
+dependency "network" {
+  config_path = "../01-network"
+}
+
+dependency "cluster" {
+  config_path = "../02-cluster"
+}
+
 # 2. Point to the shared Terraform code and define the automated cleanup hook
 terraform {
   source = "../../../modules/03-addons"
@@ -60,6 +68,8 @@ inputs = {
   # Static versions and region from env.hcl
   aws_region                    = local.env_vars.locals.aws_region
   cluster_name                  = local.env_vars.locals.cluster_name
+  vpc_id                        = dependency.network.outputs.vpc_id
+  # route53_zone_id               = dependency.network.outputs.subdomain_zone_id
   karpenter_version             = local.env_vars.locals.karpenter_version
   cert_manager_version          = local.env_vars.locals.cert_manager_version
   nginx_ingress_version         = local.env_vars.locals.nginx_ingress_version
