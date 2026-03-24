@@ -1,0 +1,44 @@
+# Observability 
+
+##### Kube-Prometheus-Stack starts here ##### 
+# Install the Kube-Prometheus-Stack (Prometheus, Grafana, Alertmanager)
+resource "helm_release" "kube_prometheus_stack" {
+  name             = "kube-prometheus-stack"
+  repository       = "https://prometheus-community.github.io/helm-charts"
+  chart            = "kube-prometheus-stack"
+  namespace        = "monitoring"
+  create_namespace = true
+  version          = var.kube_prometheus_stack_version
+
+  # -------------------------------------------------------------
+  # We use 'values' to set a default Grafana password and 
+  # bypass the need for the AWS EBS CSI Driver in this lab.
+  # -------------------------------------------------------------
+  values = [
+    <<-EOT
+    grafana:
+      # Set a default password for the 'admin' user
+      adminPassword: "admin"
+      service:
+        type: LoadBalancer
+        # annotations:
+        #   # This tells the AWS LB Controller to create an internet-facing balancer
+        #   service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+        #   # Optional: Use an NLB
+        #   service.beta.kubernetes.io/aws-load-balancer-type: "external"
+        #   service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
+      
+    # Disable persistent storage so the pods schedule immediately
+    # (In a real production environment, you would install the AWS 
+    # EBS CSI Driver and set these to use a StorageClass)
+    prometheus:
+      prometheusSpec:
+        storageSpec: null
+    alertmanager:
+      alertmanagerSpec:
+        storage: null
+    EOT
+  ]
+}
+
+##### Kube-Prometheus-Stack ends here #####
