@@ -69,7 +69,6 @@ inputs = {
   aws_region                    = local.env_vars.locals.aws_region
   cluster_name                  = local.env_vars.locals.cluster_name
   vpc_id                        = dependency.network.outputs.vpc_id
-  # route53_zone_id               = dependency.network.outputs.subdomain_zone_id
   karpenter_version             = local.env_vars.locals.karpenter_version
   cert_manager_version          = local.env_vars.locals.cert_manager_version
   nginx_ingress_version         = local.env_vars.locals.nginx_ingress_version

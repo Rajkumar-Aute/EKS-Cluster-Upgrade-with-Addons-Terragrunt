@@ -18,7 +18,3 @@ variable "cluster_certificate_authority_data" {
   default = ""
 }
 
-variable "domain_name" {
-  description = "The domain name to use for the cluster (e.g., eks.devsecopsguru.in)"
-  type        = string
-}

@@ -8,7 +8,3 @@ output "subnet_ids" {
   value       = local.supported_subnets
 }
 
-# output "subnet_zone_id" {
-#   description = "Mapping of subnet IDs to their availability zones"
-#   value       = aws_route53_zone.subdomain.zone_id
-# }

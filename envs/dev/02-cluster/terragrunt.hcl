@@ -27,6 +27,7 @@ dependency "network" {
 # 4. Inject all variables into the Terraform module
 inputs = {
   # Static variables from env.hcl
+  aws_region                = local.env_vars.locals.aws_region
   cluster_name              = local.env_vars.locals.cluster_name
   cluster_version           = local.env_vars.locals.cluster_version
   min_node_groups_nodes     = local.env_vars.locals.min_node_groups_nodes
