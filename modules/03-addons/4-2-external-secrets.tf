@@ -1,0 +1,82 @@
+##### External Secrets Operator starts here #####
+# IAM role for external secrets operator
+module "external_secrets_irsa_role" {
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version = "~> 5.30"
+
+  role_name = "${var.cluster_name}-external-secrets"
+
+  # The module has a built-in policy specifically for ESO!
+  # This grants read-only access to AWS Secrets Manager and SSM Parameter Store.
+  attach_external_secrets_policy = true
+
+  oidc_providers = {
+    main = {
+      provider_arn               = var.oidc_provider_arn
+      namespace_service_accounts = ["external-secrets:external-secrets"]
+    }
+  }
+}
+
+# # Install the external secrets helm chart
+# resource "helm_release" "external_secrets" {
+#   name             = "external-secrets"
+#   repository       = "https://charts.external-secrets.io"
+#   chart            = "external-secrets"
+#   namespace        = "external-secrets"
+#   create_namespace = true
+#   version          = var.external_secrets_version
+
+
+#   # Use values to install CRDs and attach the IAM role we just created
+#   values = [
+#     <<-EOT
+#     installCRDs: true
+#     serviceAccount:
+#       create: true
+#       name: external-secrets
+#       annotations:
+#         eks.amazonaws.com/role-arn: ${module.external_secrets_irsa_role.iam_role_arn}
+#     EOT
+#   ]
+#   depends_on = [
+#     helm_release.aws_load_balancer_controller
+#   ]
+# }
+
+
+# # configure the aws cluster secret store
+# Note - This can be enabled on second apply after the Helm chart is installed, or you can uncomment it now. It will fail on the first apply because the ESO CRDs won't exist yet, but it will work on the second apply once the CRDs are in place.
+
+# resource "kubernetes_manifest" "aws_cluster_secret_store" {
+#   # The 'manifest' block accepts standard Kubernetes YAML translated into HCL (Terraform's language)
+#   manifest = {
+#     apiVersion = "external-secrets.io/v1beta1"
+#     kind       = "ClusterSecretStore"
+#     metadata = {
+#       name = "aws-secrets-manager"
+#     }
+#     spec = {
+#       provider = {
+#         aws = {
+#           service = "SecretsManager"
+#           region  = "us-east-1" # Ensure this matches your AWS region
+#           auth = {
+#             jwt = {
+#               serviceAccountRef = {
+#                 name      = "external-secrets"
+#                 namespace = "external-secrets"
+#               }
+#             }
+#           }
+#         }
+#       }
+#     }
+#   }
+
+#   depends_on = [helm_release.external_secrets]
+# }
+
+
+##### External Secrets Operator ends here #####
+
