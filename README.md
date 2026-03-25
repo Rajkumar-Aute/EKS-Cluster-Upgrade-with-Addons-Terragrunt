@@ -111,5 +111,5 @@ aws eks update-kubeconfig --name EKS-upgrade-lab --region us-east-1
 
 # Trigger the global destroy
 cd env/dev
-terragrunt run-all destroy --terragrunt-non-interactive
+terragrunt run-all destroy --terragrunt-ignore-external-dependencies --terragrunt-non-interactive
 ```
