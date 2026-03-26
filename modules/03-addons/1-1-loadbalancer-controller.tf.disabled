@@ -39,7 +39,6 @@ resource "helm_release" "aws_load_balancer_controller" {
 
   atomic          = true
   cleanup_on_fail = true
-  
   force_update = true
   lint = true  
   recreate_pods   = true

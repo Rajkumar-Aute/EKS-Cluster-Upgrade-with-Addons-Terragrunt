@@ -9,6 +9,15 @@ resource "helm_release" "metrics_server" {
   namespace  = "kube-system"
   version    = var.metrics_server_version
 
+  atomic = true
+  cleanup_on_fail = true
+  force_update = true
+  lint = true
+  recreate_pods   = true
+  replace = true
+  timeout       = 600
+  wait          = true
+
 
   # -------------------------------------------------------------
   # We use 'values' here to pass raw YAML. 
