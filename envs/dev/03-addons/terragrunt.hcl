@@ -5,7 +5,32 @@ locals {
   env_vars = read_terragrunt_config(find_in_parent_folders("env.hcl"))
 }
 
-# This is the "hook" that pulls in the remote_state and providers from the root
+terraform {
+  source = "../../../modules/03-addons"
+
+  before_hook "clean_ghost_releases" {
+    commands = ["apply"]
+    execute  = [
+      "bash",
+      "-c",
+      <<-EOT
+        echo "Cleaning up potential ghost Helm secrets..."
+        # List of addon names to check
+        ADDONS=("external-dns" "kyverno" "external-secrets" "aws-load-balancer-controller" "trivy-operator" "kube-prometheus-stack")
+        for addon in "$${ADDONS[@]}"; do
+          kubectl delete secret -n kube-system -l "name=$addon,owner=helm" 2>/dev/null || true
+          kubectl delete secret -n monitoring -l "name=$addon,owner=helm" 2>/dev/null || true
+          kubectl delete secret -n kyverno -l "name=$addon,owner=helm" 2>/dev/null || true
+        done
+        echo "Cleanup complete. Proceeding with Terragrunt Apply."
+      EOT
+    ]
+  }
+}
+
+
+
+# 3. Include root config (Remote State/Providers)
 include "root" {
   path = find_in_parent_folders()
 }
@@ -16,39 +41,7 @@ dependency "network" {
 
 dependency "cluster" {
   config_path = "../02-cluster"
-}
 
-# 2. Point to the shared Terraform code and define the automated cleanup hook
-terraform {
-  source = "../../../modules/03-addons"
-#  before_hook "clean_ghost_helm_releases" {
-#    commands = ["apply"]
-#    execute  = [
-#      "bash", "-c",
-#      <<-EOT
-#      # 1. Update kubeconfig
-#      aws eks update-kubeconfig --name EKS-upgrade-lab --region us-east-1
-#      
-#      # 2. Delete the specific webhooks that block installations
-#      kubectl delete validatingwebhookconfigurations --all --ignore-not-found
-#      kubectl delete mutatingwebhookconfigurations --all --ignore-not-found
-#      
-#      # 3. Clear any Helm "Pending" secrets that block the release
-#      kubectl delete secret -l owner=helm --all-namespaces --ignore-not-found
-#      
-#      # 4. Force delete stuck pods in Terminating state (optional but helpful)
-#      kubectl get pods -A | grep Terminating | awk '{print $2 " --namespace=" $1}' | xargs -I {} kubectl delete pod {} --force --grace-period=0 || true
-#      
-#      # Clear Helm records that think the release is "failed"
-#      kubectl delete secret -l owner=helm,name=cert-manager -n cert-manager --ignore-not-found
-#      EOT
-#    ]
-#  }
-}
-
-# 3. Fetch dynamic outputs from the Cluster Layer
-dependency "cluster" {
-  config_path = "../02-cluster"
 
 #  mock_outputs_allowed_terraform_commands = ["apply", "plan", "validate", "destroy"]
 #  skip_outputs = get_terraform_command() == "destroy" ? true : false
