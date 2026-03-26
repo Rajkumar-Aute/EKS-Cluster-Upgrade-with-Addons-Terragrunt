@@ -15,8 +15,8 @@ module "eks" {
 
   create_cloudwatch_log_group = false
   create_kms_key              = false
-  cluster_enabled_log_types = []
-  
+  cluster_enabled_log_types   = []
+
   # Tell EKS not to use managed encryption for now
   cluster_encryption_config = {}
 
@@ -46,8 +46,19 @@ module "eks" {
       use_name_prefix = true # If true, Terraform appends random characters to the name
 
       # Capacity and OS Settings
-      capacity_type  = "SPOT"                      # Can be "ON_DEMAND" or "SPOT"
-      instance_types = ["t3.large", "t3a.large"] # Multiple types protect against Spot shortages
+      capacity_type  = "SPOT"                                               # Can be "ON_DEMAND" or "SPOT"
+      instance_types = ["c6a.large", "c7a.large", "m6a.large", "m7a.large"] # Multiple types protect against Spot shortages
+
+      # Enable Prefix Delegation to hit "Max Pods" (110+)
+      # This allows the node to use IP prefixes (/28) instead of single IPs
+      post_bootstrap_user_data = <<-EOT
+        #!/bin/bash
+        # Configure the node to ignore the standard ENI limit for pods
+        # verify by running cmd $ kubectl get node <node-name> -o jsonpath='{.status.capacity.pods}'
+        /etc/eks/bootstrap.sh ${var.cluster_name} --use-max-pods false --kubelet-extra-args '--max-pods=110'
+      EOT
+      
+      kubelet_extra_args = "--max-pods=110"
 
       # AL2023 is the new standard. Other options include AL2_x86_64, BOTTLEROCKET_x86_64, etc.
       ami_type = "AL2023_x86_64_STANDARD"
