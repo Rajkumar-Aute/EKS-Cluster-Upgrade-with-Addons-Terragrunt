@@ -8,24 +8,24 @@ locals {
 terraform {
   source = "../../../modules/03-addons"
 
-  before_hook "clean_ghost_releases" {
-    commands = ["apply"]
-    execute  = [
-      "bash",
-      "-c",
-      <<-EOT
-        echo "Cleaning up potential ghost Helm secrets..."
-        # List of addon names to check
-        ADDONS=("external-dns" "kyverno" "external-secrets" "aws-load-balancer-controller" "trivy-operator" "kube-prometheus-stack")
-        for addon in "$${ADDONS[@]}"; do
-          kubectl delete secret -n kube-system -l "name=$addon,owner=helm" 2>/dev/null || true
-          kubectl delete secret -n monitoring -l "name=$addon,owner=helm" 2>/dev/null || true
-          kubectl delete secret -n kyverno -l "name=$addon,owner=helm" 2>/dev/null || true
-        done
-        echo "Cleanup complete. Proceeding with Terragrunt Apply."
-      EOT
-    ]
-  }
+#  before_hook "clean_ghost_releases" {
+#    commands = ["apply"]
+#    execute  = [
+#      "bash",
+#      "-c",
+#      <<-EOT
+#        echo "Cleaning up potential ghost Helm secrets..."
+#        # List of addon names to check
+#        ADDONS=("external-dns" "kyverno" "external-secrets" "aws-load-balancer-controller" "trivy-operator" "kube-prometheus-stack")
+#        for addon in "$${ADDONS[@]}"; do
+#          kubectl delete secret -n kube-system -l "name=$addon,owner=helm" 2>/dev/null || true
+#          kubectl delete secret -n monitoring -l "name=$addon,owner=helm" 2>/dev/null || true
+#          kubectl delete secret -n kyverno -l "name=$addon,owner=helm" 2>/dev/null || true
+#        done
+#        echo "Cleanup complete. Proceeding with Terragrunt Apply."
+#      EOT
+#    ]
+#  }
 }
 
 

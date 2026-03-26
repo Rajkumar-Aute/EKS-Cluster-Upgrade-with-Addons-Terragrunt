@@ -40,6 +40,12 @@ resource "helm_release" "aws_load_balancer_controller" {
   wait          = true
   wait_for_jobs = true
   timeout       = 600
+  atomic = true
+  replace = true
+  force_update = true
+  cleanup_on_fail = true
+  recreate_pods   = true
+  lint = true
 
 
   # Pass the cluster name and the newly created IAM role ARN to the Helm chart

@@ -42,6 +42,7 @@ Because Terragrunt understands the dependency graph, you do not need to apply th
 cd envs/dev
 
 # Apply the entire stack
+terragrunt run-all init -upgrade --terragrunt-non-interactive
 terragrunt run-all apply --terragrunt-non-interactive
 # It will ask for conformation type "y"
 # Terragrunt will automatically build the Network first, followed by the Cluster, and finally the Addons.
