@@ -57,7 +57,7 @@ module "eks" {
         # verify by running cmd $ kubectl get node <node-name> -o jsonpath='{.status.capacity.pods}'
         /etc/eks/bootstrap.sh ${var.cluster_name} --use-max-pods false --kubelet-extra-args '--max-pods=110'
       EOT
-      
+
       kubelet_extra_args = "--max-pods=110"
 
       # AL2023 is the new standard. Other options include AL2_x86_64, BOTTLEROCKET_x86_64, etc.

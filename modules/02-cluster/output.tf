@@ -23,5 +23,5 @@ output "karpenter_queue_name" {
 }
 
 output "eksctl_to_get_kubeconfig" {
-  value =  "aws eks update-kubeconfig --name ${module.eks.cluster_name} --region ${var.aws_region}"  
+  value = "aws eks update-kubeconfig --name ${module.eks.cluster_name} --region ${var.aws_region}"
 }

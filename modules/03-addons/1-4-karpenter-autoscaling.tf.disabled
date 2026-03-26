@@ -68,10 +68,12 @@ resource "helm_release" "karpenter" {
   chart               = "karpenter"
   version             = var.karpenter_version
 
-  force_update    = true
-  recreate_pods   = true
+  atomic          = true
   cleanup_on_fail = true
-  atomic          = false
+  force_update    = true
+  lint            = true
+  recreate_pods   = true
+  replace         = true
   timeout         = 900
   wait            = true
 

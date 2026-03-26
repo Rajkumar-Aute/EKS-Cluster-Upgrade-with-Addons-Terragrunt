@@ -15,7 +15,7 @@ variable "cluster_version" {
 
 variable "vpc_id" {
   description = "The ID of the VPC to deploy the EKS cluster in"
-  type        = string 
+  type        = string
 }
 
 variable "subnet_ids" {

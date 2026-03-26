@@ -58,6 +58,15 @@ resource "helm_release" "external_dns" {
   namespace  = "kube-system"
   version    = var.external_dns_version
 
+  wait = true
+  atomic = true
+  timeout = 600
+  replace = true
+  force_update = true
+  cleanup_on_fail = true
+  recreate_pods = true
+  lint = true
+
 
 values = [
     <<-EOT
