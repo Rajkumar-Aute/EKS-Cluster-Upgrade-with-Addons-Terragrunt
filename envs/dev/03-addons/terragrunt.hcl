@@ -32,7 +32,7 @@ terraform {
 
 # 3. Include root config (Remote State/Providers)
 include "root" {
-  path = find_in_parent_folders()
+  path = find_in_parent_folders("root.hcl")
 }
 
 dependency "network" {

@@ -5,7 +5,7 @@ locals {
 
 # This is the "hook" that pulls in the remote_state and providers from the root
 include "root" {
-  path = find_in_parent_folders()
+  path = find_in_parent_folders("root.hcl")
 }
 
 # 2. Point to the shared Terraform code

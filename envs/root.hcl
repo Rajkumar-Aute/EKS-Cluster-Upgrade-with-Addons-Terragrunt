@@ -105,7 +105,7 @@ remote_state {
     if_exists = "overwrite_terragrunt"
   }
   config = {
-    bucket         = "devsecopsguru-terraform-state-${get_aws_account_id()}"
+    bucket         = "devsecopsguru-terragrunt-state-${get_aws_account_id()}"
     key            = "${path_relative_to_include()}/terraform.tfstate"
     region         = "${local.aws_region}"
     encrypt        = true
