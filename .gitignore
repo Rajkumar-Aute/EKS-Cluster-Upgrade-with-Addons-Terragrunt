@@ -1,6 +1,5 @@
 # Local .terraform directories
 .terraform/
-x/*
 
 # .tfstate files
 *.tfstate
@@ -57,3 +56,7 @@ terragrunt-debug.tfvars.json
 # Dynamically generated files by Terragrunt root configuration
 backend.tf
 provider.tf
+
+# extra files
+x/*
+x
