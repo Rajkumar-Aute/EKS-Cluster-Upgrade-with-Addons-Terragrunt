@@ -20,8 +20,6 @@ module "eks" {
   # Tell EKS not to use managed encryption for now
   cluster_encryption_config = {}
 
-
-
   # Allow public access to the Kubernetes API server
   cluster_endpoint_public_access = true
 
@@ -39,7 +37,7 @@ module "eks" {
 
   # Configure Managed Node Groups
   eks_managed_node_groups = {
-    spot_node_group = {
+    spot_nodes = {
       # General configuration      
       name            = "${var.cluster_name}-spot"
       description     = "A EKS Upgrade Practice spot node group"
@@ -48,20 +46,33 @@ module "eks" {
       # Capacity and OS Settings
       capacity_type  = "SPOT"                                               # Can be "ON_DEMAND" or "SPOT"
       instance_types = ["c6a.large", "c7a.large", "m6a.large", "m7a.large"] # Multiple types protect against Spot shortages
-
-      # Enable Prefix Delegation to hit "Max Pods" (110+)
-      # This allows the node to use IP prefixes (/28) instead of single IPs
-      post_bootstrap_user_data = <<-EOT
-        #!/bin/bash
-        # Configure the node to ignore the standard ENI limit for pods
-        # verify by running cmd $ kubectl get node <node-name> -o jsonpath='{.status.capacity.pods}'
-        /etc/eks/bootstrap.sh ${var.cluster_name} --use-max-pods false --kubelet-extra-args '--max-pods=110'
-      EOT
-
-      kubelet_extra_args = "--max-pods=110"
-
       # AL2023 is the new standard. Other options include AL2_x86_64, BOTTLEROCKET_x86_64, etc.
       ami_type = "AL2023_x86_64_STANDARD"
+
+
+      # This ensures the Kubelet is started with the 110 pods limit.
+      cloudinit_post_nodeadm = [
+        {
+          content_type = "application/node.eks.aws"
+          content      = <<-EOT
+            ---
+            apiVersion: node.eks.aws/v1alpha1
+            kind: NodeConfig
+            spec:
+              kubelet:
+                config:
+                  maxPods: 110
+          EOT
+        }
+      ]
+
+      # Combined all required IAM policies into a single block
+      iam_role_additional_policies = {
+        AmazonEKSWorkerNodePolicy          = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+        AmazonEKS_CNI_Policy               = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+        AmazonEC2ContainerRegistryReadOnly = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+        AmazonSSMManagedInstanceCore       = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+      }
 
       # Scaling (Requires Cluster Autoscaler or Karpenter to work)
       min_size     = var.min_node_groups_nodes     # Absolute minimum number of nodes
@@ -105,7 +116,6 @@ module "eks" {
             iops        = 3000
             throughput  = 125
             encrypted   = true
-            # kms_key_id          = "arn:aws:kms:region:account:key/..." # Optional custom KMS key
             delete_on_termination = true
           }
         }
