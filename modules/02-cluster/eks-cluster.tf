@@ -67,6 +67,10 @@ module "eks" {
       ]
 
       # Combined all required IAM policies into a single block
+      
+      # IAM (Identity & Access Management)
+      iam_role_name            = "spot-node-group-role"
+      iam_role_use_name_prefix = true # If true, Terraform appends random characters to the name to ensure uniqueness
       iam_role_additional_policies = {
         AmazonEKSWorkerNodePolicy          = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
         AmazonEKS_CNI_Policy               = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
@@ -133,17 +137,8 @@ module "eks" {
       # key_name = "my-aws-ssh-key-name"
 
 
-      # IAM (Identity & Access Management)
-      iam_role_name            = "spot-node-group-role"
-      iam_role_use_name_prefix = true # If true, Terraform appends random characters to the name to ensure uniqueness
 
-      # Attach extra IAM policies to your EC2 nodes. 
-      # (e.g., giving nodes the ability to pull from S3 or use SSM Session Manager)
-      iam_role_additional_policies = {
-        AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-      }
-
-      # EC2 Metadata Service (IMDS) settings for the nodes in this group.
+      # EC2 Metadata Service (IMDSv2) settings for the nodes in this group.
       # Enforcing IMDSv2 helps prevent SSRF attacks on your pods
       metadata_options = {
         http_endpoint               = "enabled"
