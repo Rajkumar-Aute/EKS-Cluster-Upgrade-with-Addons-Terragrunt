@@ -9,35 +9,50 @@ resource "helm_release" "kube_prometheus_stack" {
   namespace        = "monitoring"
   create_namespace = true
   version          = var.kube_prometheus_stack_version
+  
+  atomic          = true
+  cleanup_on_fail = true
+  force_update = true
+  lint = true  
+  recreate_pods   = true
+  replace = true
+  timeout       = 600
+  wait          = true
+  wait_for_jobs = true
 
   # -------------------------------------------------------------
   # We use 'values' to set a default Grafana password and 
   # bypass the need for the AWS EBS CSI Driver in this lab.
   # -------------------------------------------------------------
   values = [
-    <<-EOT
-    grafana:
-      # Set a default password for the 'admin' user
-      adminPassword: "admin"
-      service:
-        type: LoadBalancer
-        # annotations:
-        #   # This tells the AWS LB Controller to create an internet-facing balancer
-        #   service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
-        #   # Optional: Use an NLB
-        #   service.beta.kubernetes.io/aws-load-balancer-type: "external"
-        #   service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
+    yamlencode({
+      grafana = {
+        adminPassword = "admin"
+        service = {
+          # CHANGE THIS from LoadBalancer to ClusterIP
+          type = "ClusterIP" 
+          # type: LoadBalancer
+          #   annotations:
+          #     # This tells the AWS LB Controller to create an internet-facing balancer
+          #     service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+          #     # Optional: Use an NLB
+          #     service.beta.kubernetes.io/aws-load-balancer-type: "external"
+          #     service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
+        }
+      }
       
-    # Disable persistent storage so the pods schedule immediately
-    # (In a real production environment, you would install the AWS 
-    # EBS CSI Driver and set these to use a StorageClass)
-    prometheus:
-      prometheusSpec:
-        storageSpec: null
-    alertmanager:
-      alertmanagerSpec:
-        storage: null
-    EOT
+      # Keep these as null to avoid needing EBS CSI driver (Ephemeral storage)
+      prometheus = {
+        prometheusSpec = {
+          storageSpec = null
+        }
+      }
+      alertmanager = {
+        alertmanagerSpec = {
+          storage = null
+        }
+      }
+    })
   ]
 }
 
