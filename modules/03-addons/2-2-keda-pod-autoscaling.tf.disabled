@@ -31,21 +31,31 @@ resource "helm_release" "keda" {
   create_namespace = true
   version          = "2.16.0" # or var.keda_version
 
-  # Prevent the "Still creating" hang
-  wait = false
+  # --- Reliability Settings ---
+  wait            = false   # Prevents Terraform hangs if pods take time to start
+  cleanup_on_fail = true    # Automatically removes failed releases for cleaner retries
+  force_update    = true    # Useful for recovering from 'broken' states
 
   values = [
     yamlencode({
       serviceAccount = {
+        create = true
         name = "keda-operator"
         annotations = {
           "eks.amazonaws.com/role-arn" = module.keda_irsa_role.iam_role_arn
         }
       }
-      # Best practice: Run KEDA on your 'system' node pool in Auto Mode
-      nodeSelector = {
-        "eks.amazonaws.com/compute-type" = "auto"
+
+      # Operator Settings
+      operator = {
+        replicaCount = 1
       }
+      # # Best practice: Run KEDA on your 'system' node pool in Auto Mode
+      # nodeSelector = {
+      #   "eks.amazonaws.com/compute-type" = "auto"
+      # }
     })
   ]
+
+  depends_on = [module.keda_irsa_role]
 }

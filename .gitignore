@@ -59,4 +59,5 @@ provider.tf
 
 # extra files
 x/*
+x.*
 x
