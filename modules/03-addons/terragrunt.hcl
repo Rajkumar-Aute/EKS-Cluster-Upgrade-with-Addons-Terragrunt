@@ -4,15 +4,15 @@ include "root" {
 
 dependency "cluster" {
   config_path = "../02-cluster"
-  
+
   # Ensure Addons wait if the cluster isn't fully ready
   mock_outputs = {
-    cluster_name = "mock-cluster"
-    cluster_endpoint = "https://mock.endpoint"
+    cluster_name                       = "mock-cluster"
+    cluster_endpoint                   = "https://mock.endpoint"
     cluster_certificate_authority_data = "bW9jaw=="
-    oidc_provider_arn = "arn:aws:iam::123456789012:oidc-provider/mock"
-    karpenter_iam_role_arn = "arn:aws:iam::123456789012:role/mock"
-    karpenter_queue_name = "mock-queue"
+    oidc_provider_arn                  = "arn:aws:iam::123456789012:oidc-provider/mock"
+    karpenter_iam_role_arn             = "arn:aws:iam::123456789012:role/mock"
+    karpenter_queue_name               = "mock-queue"
   }
 }
 

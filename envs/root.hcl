@@ -17,8 +17,9 @@ generate "provider" {
   path      = "provider.tf"
   if_exists = "overwrite_terragrunt"
   contents  = <<EOF
-# 1. REQUIRED PROVIDERS (Must be at the very top of the file)
-%{ if strcontains(get_terragrunt_dir(), "03-addons") }
+
+# Required providers
+%{if strcontains(get_terragrunt_dir(), "03-addons")}
 terraform {
   required_providers {
     aws = {
@@ -40,7 +41,7 @@ terraform {
   }
 }
 
-# 2. DATA SOURCES (Only for Addons)
+# Date sources
 data "aws_eks_cluster" "cluster" {
   name = "${local.cluster_name}"
 }
@@ -49,7 +50,7 @@ data "aws_eks_cluster_auth" "cluster" {
   name = "${local.cluster_name}"
 }
 
-# 3. KUBERNETES-DEPENDENT PROVIDERS
+# Kubernetes dependent providers
 provider "kubernetes" {
   host                   = data.aws_eks_cluster.cluster.endpoint
   cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
@@ -70,7 +71,8 @@ provider "kubectl" {
   token                  = data.aws_eks_cluster_auth.cluster.token
   load_config_file       = false
 }
-%{ else }
+%{else}
+
 # Simplified required providers for 01-network and 02-cluster
 terraform {
   required_providers {
@@ -80,9 +82,9 @@ terraform {
     }
   }
 }
-%{ endif }
+%{endif}
 
-# 4. AWS PROVIDER (Applied to all modules)
+# AWS provider (Applied to all modules)
 provider "aws" {
   region = "${local.aws_region}"
   default_tags {
@@ -97,7 +99,7 @@ provider "aws" {
 EOF
 }
 
-# remote state configuration
+# remote state configuration Terragrunt will create S3 bucket and sub directories automatically if not present
 remote_state {
   backend = "s3"
   generate = {
@@ -105,14 +107,13 @@ remote_state {
     if_exists = "overwrite_terragrunt"
   }
   config = {
-    bucket         = "devsecopsguru-terragrunt-state-${get_aws_account_id()}"
-    key            = "${path_relative_to_include()}/terraform.tfstate"
-    region         = "${local.aws_region}"
-    encrypt        = true
+    bucket  = "devsecopsguru-terragrunt-state-${get_aws_account_id()}"
+    key     = "${path_relative_to_include()}/terraform.tfstate"
+    region  = "${local.aws_region}"
+    encrypt = true
     # dynamodb_table = "terraform-lock-table"
   }
 }
-
 
 inputs = merge(
   local.env_vars.locals,

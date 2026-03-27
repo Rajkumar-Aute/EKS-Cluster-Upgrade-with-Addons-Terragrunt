@@ -1,6 +1,4 @@
-# environments/dev/03-addons/terragrunt.hcl
-
-# 1. Load the global environment variables
+# Load the global environment variables
 locals {
   env_vars = read_terragrunt_config(find_in_parent_folders("env.hcl"))
 }
@@ -8,29 +6,29 @@ locals {
 terraform {
   source = "../../../modules/03-addons"
 
-#  before_hook "clean_ghost_releases" {
-#    commands = ["apply"]
-#    execute  = [
-#      "bash",
-#      "-c",
-#      <<-EOT
-#        echo "Cleaning up potential ghost Helm secrets..."
-#        # List of addon names to check
-#        ADDONS=("external-dns" "kyverno" "external-secrets" "aws-load-balancer-controller" "trivy-operator" "kube-prometheus-stack")
-#        for addon in "$${ADDONS[@]}"; do
-#          kubectl delete secret -n kube-system -l "name=$addon,owner=helm" 2>/dev/null || true
-#          kubectl delete secret -n monitoring -l "name=$addon,owner=helm" 2>/dev/null || true
-#          kubectl delete secret -n kyverno -l "name=$addon,owner=helm" 2>/dev/null || true
-#        done
-#        echo "Cleanup complete. Proceeding with Terragrunt Apply."
-#      EOT
-#    ]
-#  }
+  #  before_hook "clean_ghost_releases" {
+  #    commands = ["apply"]
+  #    execute  = [
+  #      "bash",
+  #      "-c",
+  #      <<-EOT
+  #        echo "Cleaning up potential ghost Helm secrets..."
+  #        # List of addon names to check
+  #        ADDONS=("external-dns" "kyverno" "external-secrets" "aws-load-balancer-controller" "trivy-operator" "kube-prometheus-stack")
+  #        for addon in "$${ADDONS[@]}"; do
+  #          kubectl delete secret -n kube-system -l "name=$addon,owner=helm" 2>/dev/null || true
+  #          kubectl delete secret -n monitoring -l "name=$addon,owner=helm" 2>/dev/null || true
+  #          kubectl delete secret -n kyverno -l "name=$addon,owner=helm" 2>/dev/null || true
+  #        done
+  #        echo "Cleanup complete. Proceeding with Terragrunt Apply."
+  #      EOT
+  #    ]
+  #  }
 }
 
 
 
-# 3. Include root config (Remote State/Providers)
+# Include root config (Remote State/Providers)
 include "root" {
   path = find_in_parent_folders("root.hcl")
 }
@@ -43,8 +41,8 @@ dependency "cluster" {
   config_path = "../02-cluster"
 
 
-#  mock_outputs_allowed_terraform_commands = ["apply", "plan", "validate", "destroy"]
-#  skip_outputs = get_terraform_command() == "destroy" ? true : false
+  #  mock_outputs_allowed_terraform_commands = ["apply", "plan", "validate", "destroy"]
+  #  skip_outputs = get_terraform_command() == "destroy" ? true : false
   # Mocks allow 'terragrunt validate' or 'plan' to work even if the cluster isn't built yet
   mock_outputs = {
     cluster_endpoint                   = "https://mock.eks.amazonaws.com"
@@ -54,7 +52,7 @@ dependency "cluster" {
   }
 }
 
-# 4. Inject all variables into the Addons module
+# Inject all variables into the Addons module
 inputs = {
   # Static versions and region from env.hcl
   aws_region                    = local.env_vars.locals.aws_region

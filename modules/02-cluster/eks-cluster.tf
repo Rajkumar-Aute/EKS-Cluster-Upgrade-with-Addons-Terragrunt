@@ -67,7 +67,7 @@ module "eks" {
       ]
 
       # Combined all required IAM policies into a single block
-      
+
       # IAM (Identity & Access Management)
       iam_role_name            = "spot-node-group-role"
       iam_role_use_name_prefix = true # If true, Terraform appends random characters to the name to ensure uniqueness
@@ -115,11 +115,11 @@ module "eks" {
         xvda = {
           device_name = "/dev/xvda"
           ebs = {
-            volume_size = 50    # Size in GB
-            volume_type = "gp3" # gp3 is faster and cheaper than gp2
-            iops        = 3000
-            throughput  = 125
-            encrypted   = true
+            volume_size           = 50    # Size in GB
+            volume_type           = "gp3" # gp3 is faster and cheaper than gp2
+            iops                  = 3000
+            throughput            = 125
+            encrypted             = true
             delete_on_termination = true
           }
         }
