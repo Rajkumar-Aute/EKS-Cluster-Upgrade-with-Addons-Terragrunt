@@ -51,8 +51,6 @@ dependency "cluster" {
     cluster_certificate_authority_data = "bW9jaw=="
     cluster_name                       = "mock-cluster"
     oidc_provider_arn                  = "arn:aws:iam::123456789012:oidc-provider/mock"
-    karpenter_iam_role_arn             = "arn:aws:iam::123456789012:role/mock"
-    karpenter_queue_name               = "mock-queue"
   }
 }
 
@@ -77,6 +75,4 @@ inputs = {
   cluster_endpoint                   = dependency.cluster.outputs.cluster_endpoint
   cluster_certificate_authority_data = dependency.cluster.outputs.cluster_certificate_authority_data
   oidc_provider_arn                  = dependency.cluster.outputs.oidc_provider_arn
-  karpenter_iam_role_arn             = dependency.cluster.outputs.karpenter_iam_role_arn
-  karpenter_queue_name               = dependency.cluster.outputs.karpenter_queue_name
 }

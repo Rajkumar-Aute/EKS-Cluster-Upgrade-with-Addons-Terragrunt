@@ -22,15 +22,6 @@ variable "oidc_provider_arn" {
   type        = string
 }
 
-variable "karpenter_iam_role_arn" {
-  description = "The ARN of the IAM role for Karpenter"
-  type        = string
-}
-
-variable "karpenter_queue_name" {
-  description = "The name of the SQS queue for Karpenter to listen to for Spot interruptions"
-  type        = string
-}
 
 # Addon versions
 variable "karpenter_version" {

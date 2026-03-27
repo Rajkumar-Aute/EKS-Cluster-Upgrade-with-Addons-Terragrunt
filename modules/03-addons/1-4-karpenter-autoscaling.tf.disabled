@@ -1,5 +1,6 @@
 ##### Karpenter starts here #####
 
+
 # Retrieve the authentication token to pull the Karpenter image from AWS Public ECR
 data "aws_ecrpublic_authorization_token" "token" {}
 data "aws_caller_identity" "current" {}
@@ -101,8 +102,6 @@ resource "helm_release" "karpenter" {
           memory: 1Gi
     EOT
   ]
-  
-  depends_on = [helm_release.aws_load_balancer_controller]
 }
 
 # Karpenter EC2 Node class (The "Where" and "How")
