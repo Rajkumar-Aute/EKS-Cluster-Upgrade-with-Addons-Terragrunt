@@ -7,8 +7,8 @@ locals {
   domain_name = "eks.devsecopsguru.in"
   
   min_node_groups_nodes = 1
-  max_node_groups_nodes = 2
-  desired_node_groups_nodes = 1
+  max_node_groups_nodes = 3
+  desired_node_groups_nodes = 2
 
 
 
