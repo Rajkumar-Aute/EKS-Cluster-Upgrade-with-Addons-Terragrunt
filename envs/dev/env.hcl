@@ -11,7 +11,15 @@ locals {
   min_node_groups_nodes     = 1
   max_node_groups_nodes     = 3
   desired_node_groups_nodes = 2
-
+  
+  # terraform provider version 
+  provider_versions = {
+    aws        = "5.0"
+    helm       = "3.0"
+    kubernetes = "3.0"
+    kubectl    = "1.14.0"
+  }
+  
   # Module Versions
   module_eks_version = "~> 20.37"
 

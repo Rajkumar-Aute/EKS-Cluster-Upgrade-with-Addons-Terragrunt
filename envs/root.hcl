@@ -5,6 +5,7 @@ download_dir = "C:/temp/tg"
 locals {
   # Automatically load environment-level variables
   env_vars = read_terragrunt_config(find_in_parent_folders("env.hcl"))
+  tf_provider_vars = local.env_vars.locals.provider_versions
 
   # Extract the variables for easier use in this file
   environment  = local.env_vars.locals.environment
@@ -24,19 +25,19 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = "~> ${local.tf_provider_vars.aws}"
     }
     helm = {
       source  = "hashicorp/helm"
-      version = "~> 3.0"
+      version = "~> ${local.tf_provider_vars.helm}"
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "~> 3.0"
+      version = "~> ${local.tf_provider_vars.kubernetes}"
     }
     kubectl = {
       source  = "gavinbunney/kubectl"
-      version = ">= 1.14.0"
+      version = ">= ${local.tf_provider_vars.kubectl}"
     }
   }
 }
@@ -78,7 +79,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = "~> ${local.tf_provider_vars.aws}"
     }
   }
 }
