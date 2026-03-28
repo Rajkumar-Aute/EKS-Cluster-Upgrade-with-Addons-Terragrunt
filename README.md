@@ -16,9 +16,6 @@ Open your Git Bash terminal and run:
 # 1. Tell Git to ignore the Windows 260-character path limit
 git config --global core.longpaths true
 
-# 2. Redirect Terragrunt's heavy cache to a short path at the root of your drive
-mkdir -p /c/tg_cache
-export TERRAGRUNT_DOWNLOAD="/c/tg_cache"
 ```
 
 ## Step 1: Prepare the Terraform Code

@@ -66,8 +66,6 @@ module "eks" {
         }
       ]
 
-      # Combined all required IAM policies into a single block
-
       # IAM (Identity & Access Management)
       iam_role_name            = "spot-node-group-role"
       iam_role_use_name_prefix = true # If true, Terraform appends random characters to the name to ensure uniqueness
@@ -134,7 +132,7 @@ module "eks" {
       # vpc_security_group_ids = ["sg-0123456789abcdef0"]
 
       # Allow SSH access (Requires an SG that permits port 22)
-      # key_name = "my-aws-ssh-key-name"
+      # key_name = "aws-ssh-key"
 
 
 
