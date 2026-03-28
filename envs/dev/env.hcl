@@ -3,6 +3,8 @@ locals {
   aws_region      = "us-east-1"
   cluster_name    = "eks-upgrade-lab-${local.environment}"
   cluster_version = "1.34"
+  eks_capacity_type  = "SPOT"
+  eks_instance_types     = ["c6a.large", "c7a.large", "m6a.large", "m7a.large"]
 
   domain_name = "eks.devsecopsguru.in"
 
@@ -10,6 +12,8 @@ locals {
   max_node_groups_nodes     = 3
   desired_node_groups_nodes = 2
 
+  # Module Versions
+  module_eks_version = "~> 20.37"
 
 
   karpenter_version             = "1.0.1"
