@@ -1,14 +1,19 @@
-# 1. Load the global environment variables
+# Load the global environment variables
 locals {
   env_vars = read_terragrunt_config(find_in_parent_folders("env.hcl"))
 }
 
-# 2. Point to the shared Terraform code
+# This is the "hook" that pulls in the remote_state and providers from the root
+include "root" {
+  path = find_in_parent_folders("root.hcl")
+}
+
+# Point to the shared Terraform code
 terraform {
   source = "../../../modules/02-cluster"
 }
 
-# 3. Fetch outputs from the Network Layer
+# Fetch outputs from the Network Layer
 dependency "network" {
   config_path = "../01-network"
 
@@ -19,9 +24,10 @@ dependency "network" {
   }
 }
 
-# 4. Inject all variables into the Terraform module
+# Inject all variables into the Terraform module
 inputs = {
   # Static variables from env.hcl
+  aws_region                = local.env_vars.locals.aws_region
   cluster_name              = local.env_vars.locals.cluster_name
   cluster_version           = local.env_vars.locals.cluster_version
   min_node_groups_nodes     = local.env_vars.locals.min_node_groups_nodes

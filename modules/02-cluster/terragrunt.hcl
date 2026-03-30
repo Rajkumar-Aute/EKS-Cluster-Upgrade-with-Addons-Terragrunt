@@ -1,10 +1,11 @@
 include "root" {
-  path = find_in_parent_folders()
+  path = find_in_parent_folders("root.hcl")
 }
 
 dependency "network" {
   config_path = "../01-network"
 }
+
 
 # Pass the outputs from Network directly into the Cluster variables
 inputs = {

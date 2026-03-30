@@ -1,13 +1,3 @@
-# # 1. READ REMOTE STATE FROM NETWORK LAYER
-# # -------------------------------------------------------------
-# data "terraform_remote_state" "network" {
-#   backend = "local"
-#   config = {
-#     path = "../01-network/terraform.tfstate"
-#   }
-# }
-
-
 # Provision the EKS Cluster
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
@@ -19,6 +9,16 @@ module "eks" {
   cluster_upgrade_policy = {
     support_type = "STANDARD"
   }
+
+  # create_cloudwatch_log_group = true  
+  # cloudwatch_log_group_retention_in_days = 1   # Optional: Set a short retention to save costs
+
+  create_cloudwatch_log_group = false
+  create_kms_key              = false
+  cluster_enabled_log_types   = []
+
+  # Tell EKS not to use managed encryption for now
+  cluster_encryption_config = {}
 
   # Allow public access to the Kubernetes API server
   cluster_endpoint_public_access = true
@@ -37,18 +37,44 @@ module "eks" {
 
   # Configure Managed Node Groups
   eks_managed_node_groups = {
-    spot_node_group = {
+    spot_nodes = {
       # General configuration      
       name            = "${var.cluster_name}-spot"
       description     = "A EKS Upgrade Practice spot node group"
       use_name_prefix = true # If true, Terraform appends random characters to the name
 
       # Capacity and OS Settings
-      capacity_type  = "SPOT"                      # Can be "ON_DEMAND" or "SPOT"
-      instance_types = ["t3.large", "t3a.large"] # Multiple types protect against Spot shortages
-
+      capacity_type  = var.eks_capacity_type # Can be "ON_DEMAND" or "SPOT"
+      instance_types = var.eks_instance_types
       # AL2023 is the new standard. Other options include AL2_x86_64, BOTTLEROCKET_x86_64, etc.
       ami_type = "AL2023_x86_64_STANDARD"
+
+
+      # This ensures the Kubelet is started with the 110 pods limit.
+      cloudinit_post_nodeadm = [
+        {
+          content_type = "application/node.eks.aws"
+          content      = <<-EOT
+            ---
+            apiVersion: node.eks.aws/v1alpha1
+            kind: NodeConfig
+            spec:
+              kubelet:
+                config:
+                  maxPods: 110
+          EOT
+        }
+      ]
+
+      # IAM (Identity & Access Management)
+      iam_role_name            = "spot-node-group-role"
+      iam_role_use_name_prefix = true # If true, Terraform appends random characters to the name to ensure uniqueness
+      iam_role_additional_policies = {
+        AmazonEKSWorkerNodePolicy          = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+        AmazonEKS_CNI_Policy               = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+        AmazonEC2ContainerRegistryReadOnly = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+        AmazonSSMManagedInstanceCore       = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+      }
 
       # Scaling (Requires Cluster Autoscaler or Karpenter to work)
       min_size     = var.min_node_groups_nodes     # Absolute minimum number of nodes
@@ -87,12 +113,11 @@ module "eks" {
         xvda = {
           device_name = "/dev/xvda"
           ebs = {
-            volume_size = 50    # Size in GB
-            volume_type = "gp3" # gp3 is faster and cheaper than gp2
-            iops        = 3000
-            throughput  = 125
-            encrypted   = true
-            # kms_key_id          = "arn:aws:kms:region:account:key/..." # Optional custom KMS key
+            volume_size           = 50    # Size in GB
+            volume_type           = "gp3" # gp3 is faster and cheaper than gp2
+            iops                  = 3000
+            throughput            = 125
+            encrypted             = true
             delete_on_termination = true
           }
         }
@@ -107,20 +132,11 @@ module "eks" {
       # vpc_security_group_ids = ["sg-0123456789abcdef0"]
 
       # Allow SSH access (Requires an SG that permits port 22)
-      # key_name = "my-aws-ssh-key-name"
+      # key_name = "aws-ssh-key"
 
 
-      # IAM (Identity & Access Management)
-      iam_role_name            = "spot-node-group-role"
-      iam_role_use_name_prefix = true # If true, Terraform appends random characters to the name to ensure uniqueness
 
-      # Attach extra IAM policies to your EC2 nodes. 
-      # (e.g., giving nodes the ability to pull from S3 or use SSM Session Manager)
-      iam_role_additional_policies = {
-        AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-      }
-
-      # EC2 Metadata Service (IMDS) settings for the nodes in this group.
+      # EC2 Metadata Service (IMDSv2) settings for the nodes in this group.
       # Enforcing IMDSv2 helps prevent SSRF attacks on your pods
       metadata_options = {
         http_endpoint               = "enabled"
@@ -130,28 +146,3 @@ module "eks" {
     }
   }
 }
-
-# Karpenter is a next-generation cluster autoscaler that can rapidly provision new nodes in response to unschedulable pods. It offers more flexibility and faster scaling than the traditional Cluster Autoscaler, especially in environments with Spot instances.
-
-module "karpenter" {
-  source  = "terraform-aws-modules/eks/aws//modules/karpenter"
-  version = "~> 20.37"
-
-  cluster_name = module.eks.cluster_name
-
-  # Enable permissions required for Karpenter v1.0+
-  enable_v1_permissions = true
-
-  # Create IAM Role for Service Accounts (IRSA) for the Karpenter controller pods
-  enable_irsa            = true
-  irsa_oidc_provider_arn = module.eks.oidc_provider_arn
-
-  # Create the IAM role that Karpenter will attach to the underlying EC2 instances it provisions
-  create_node_iam_role = true
-  node_iam_role_name   = "${var.cluster_name}-karpenter-node"
-
-  # Create SQS Queue and EventBridge rules to gracefully handle Spot instance interruptions
-  enable_spot_termination = true
-}
-
-

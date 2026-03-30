@@ -26,22 +26,3 @@ locals {
   ]
 }
 
-# Karpenter requires subnets to be tagged so it knows where to launch nodes.
-resource "aws_ec2_tag" "karpenter_subnets" {
-  for_each    = toset(local.supported_subnets)
-  resource_id = each.value
-  key         = "karpenter.sh/discovery"
-  value       = var.cluster_name
-}
-
-
-# AWS LOAD BALANCER CONTROLLER: SUBNET DISCOVERY TAGS
-# -------------------------------------------------------------
-# The AWS LBC requires this specific tag on public subnets to 
-# know where it is allowed to provision internet-facing load balancers.
-resource "aws_ec2_tag" "public_subnet_lb_tags" {
-  for_each    = toset(local.supported_subnets)
-  resource_id = each.value
-  key         = "kubernetes.io/role/elb"
-  value       = "1"
-}

@@ -52,3 +52,12 @@ terraform.rc
 
 # Terragrunt debug files
 terragrunt-debug.tfvars.json
+
+# Dynamically generated files by Terragrunt root configuration
+backend.tf
+provider.tf
+
+# extra files
+x/*
+x.*
+x

@@ -12,3 +12,9 @@ variable "cluster_version" {
   description = "The Kubernetes version for the EKS cluster"
   type        = string
 }
+
+variable "cluster_certificate_authority_data" {
+  type    = string
+  default = ""
+}
+

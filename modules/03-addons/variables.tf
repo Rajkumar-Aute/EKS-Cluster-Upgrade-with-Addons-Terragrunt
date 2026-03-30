@@ -1,3 +1,8 @@
+variable "aws_region" {
+  description = "The AWS region to deploy resources in"
+  type        = string
+}
+
 variable "cluster_name" {
   description = "The name of the EKS cluster"
   type        = string
@@ -17,19 +22,15 @@ variable "oidc_provider_arn" {
   type        = string
 }
 
-variable "karpenter_iam_role_arn" {
-  description = "The ARN of the IAM role for Karpenter"
-  type        = string
-}
-
-variable "karpenter_queue_name" {
-  description = "The name of the SQS queue for Karpenter to listen to for Spot interruptions"
-  type        = string
-}
 
 # Addon versions
 variable "karpenter_version" {
   description = "Helm chart version for Karpenter"
+  type        = string
+}
+
+variable "keda_version" {
+  description = "Helm chart version for KEDA"
   type        = string
 }
 
@@ -40,11 +41,6 @@ variable "cert_manager_version" {
 
 variable "nginx_ingress_version" {
   description = "Helm chart version for NGINX Ingress Controller"
-  type        = string
-}
-
-variable "aws_lbc_version" {
-  description = "Helm chart version for AWS Load Balancer Controller"
   type        = string
 }
 
@@ -77,3 +73,4 @@ variable "kube_prometheus_stack_version" {
   description = "Helm chart version for Kube-Prometheus-Stack"
   type        = string
 }
+
