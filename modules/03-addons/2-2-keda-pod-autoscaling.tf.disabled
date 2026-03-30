@@ -1,11 +1,11 @@
+##### KEDA ends here #####
 # KEDA (Kubernetes Event-driven Autoscaling)
 
-# 1. IAM Role for KEDA Operator (IRSA)
+# IAM Role for KEDA Operator (IRSA)
 # This allows KEDA to read metrics from AWS (SQS, CloudWatch, etc.)
 module "keda_irsa_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
   version = "~> 5.0"
-
   role_name = "${var.cluster_name}-keda-operator"
 
   oidc_providers = {
@@ -22,25 +22,30 @@ module "keda_irsa_role" {
   }
 }
 
-# 2. Install KEDA via Helm
+# Install KEDA via Helm
 resource "helm_release" "keda" {
   name             = "keda"
   repository       = "https://kedacore.github.io/charts"
   chart            = "keda"
   namespace        = "keda"
   create_namespace = true
-  version          = "2.16.0" # or var.keda_version
+  version          = var.keda_version
 
-  # --- Reliability Settings ---
-  wait            = false   # Prevents Terraform hangs if pods take time to start
-  cleanup_on_fail = true    # Automatically removes failed releases for cleaner retries
-  force_update    = true    # Useful for recovering from 'broken' states
+  atomic          = true
+  cleanup_on_fail = true
+  force_update    = true
+  lint            = true
+  recreate_pods   = true
+  replace         = true
+  timeout         = 600
+  wait            = true
+  wait_for_jobs   = true
 
   values = [
     yamlencode({
       serviceAccount = {
         create = true
-        name = "keda-operator"
+        name   = "keda-operator"
         annotations = {
           "eks.amazonaws.com/role-arn" = module.keda_irsa_role.iam_role_arn
         }
@@ -59,3 +64,5 @@ resource "helm_release" "keda" {
 
   depends_on = [module.keda_irsa_role]
 }
+
+##### KEDA ends here #####

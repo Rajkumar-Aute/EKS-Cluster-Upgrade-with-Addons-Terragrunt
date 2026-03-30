@@ -1,12 +1,31 @@
 ##### Karpenter starts here #####
 
-
 # Retrieve the authentication token to pull the Karpenter image from AWS Public ECR
 data "aws_ecrpublic_authorization_token" "token" {}
 data "aws_caller_identity" "current" {}
+data "aws_vpc" "default" {
+  default = true
+}
 
+data "aws_subnets" "default" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default.id]
+  }
+}
 
-# Karpenter requires subnets to be tagged so it knows where to launch nodes.
+data "aws_subnet" "default" {
+  for_each = toset(data.aws_subnets.default.ids)
+  id       = each.value
+}
+
+locals {
+  supported_subnets = [
+    for s in data.aws_subnet.default : s.id
+    if s.availability_zone != "${var.aws_region}e"
+  ]
+}
+
 resource "aws_ec2_tag" "karpenter_subnets" {
   for_each    = toset(local.supported_subnets)
   resource_id = each.value
@@ -14,11 +33,9 @@ resource "aws_ec2_tag" "karpenter_subnets" {
   value       = var.cluster_name
 }
 
+# AWS load balancer controller: subnet discovery tags
 
-# AWS LOAD BALANCER CONTROLLER: SUBNET DISCOVERY TAGS
-# -------------------------------------------------------------
-# The AWS LBC requires this specific tag on public subnets to 
-# know where it is allowed to provision internet-facing load balancers.
+# The AWS LBC requires this specific tag on public subnets to know where it is allowed to provision internet-facing load balancers.
 resource "aws_ec2_tag" "public_subnet_lb_tags" {
   for_each    = toset(local.supported_subnets)
   resource_id = each.value
@@ -26,21 +43,18 @@ resource "aws_ec2_tag" "public_subnet_lb_tags" {
   value       = "1"
 }
 
-
-
 # Karpenter Module
 module "karpenter" {
   source  = "terraform-aws-modules/eks/aws//modules/karpenter"
   version = "~> 20.37"
-
   cluster_name = var.cluster_name
 
   # Enable permissions required for Karpenter v1.0+
   enable_v1_permissions = true
 
   # Create IAM Role for Service Accounts (IRSA) for the Karpenter controller pods
-  enable_irsa            = true
-  irsa_oidc_provider_arn = var.oidc_provider_arn
+  enable_irsa                     = true
+  irsa_oidc_provider_arn          = var.oidc_provider_arn
   irsa_namespace_service_accounts = ["karpenter:karpenter"]
 
   # Create the IAM role that Karpenter will attach to the underlying EC2 instances it provisions
@@ -66,8 +80,8 @@ resource "aws_iam_role_policy" "karpenter_controller_pass_role" {
         Resource = module.karpenter.node_iam_role_arn
       },
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "iam:CreateInstanceProfile",
           "iam:DeleteInstanceProfile",
           "iam:AddRoleToInstanceProfile",
@@ -98,8 +112,9 @@ resource "helm_release" "karpenter" {
   lint            = true
   recreate_pods   = true
   replace         = true
-  timeout         = 900
+  timeout         = 600
   wait            = true
+  wait_for_jobs   = true
 
   values = [
     <<-EOT

@@ -21,6 +21,7 @@ locals {
   }
   
   karpenter_version             = "1.0.1"
+  keda_version                  = "2.16.0"
   cert_manager_version          = "v1.14.4"
   nginx_ingress_version         = "4.10.1"
   aws_lbc_version               = "1.7.2"

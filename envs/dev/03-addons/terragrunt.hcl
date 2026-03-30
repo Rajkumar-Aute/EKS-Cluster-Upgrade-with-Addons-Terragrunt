@@ -59,6 +59,7 @@ inputs = {
   cluster_name                  = local.env_vars.locals.cluster_name
   vpc_id                        = dependency.network.outputs.vpc_id
   karpenter_version             = local.env_vars.locals.karpenter_version
+  keda_version                  = local.env_vars.locals.keda_version
   cert_manager_version          = local.env_vars.locals.cert_manager_version
   nginx_ingress_version         = local.env_vars.locals.nginx_ingress_version
   aws_lbc_version               = local.env_vars.locals.aws_lbc_version

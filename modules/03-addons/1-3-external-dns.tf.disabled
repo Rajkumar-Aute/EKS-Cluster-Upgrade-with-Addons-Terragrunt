@@ -28,13 +28,13 @@ resource "aws_route53_zone" "subdomain" {
 
 
 ##### ExternalDNS starts here #####
-# 1. Create the IAM Role and Policy for ExternalDNS
+# Create the IAM Role and Policy for ExternalDNS
 # Need domain name in route53 to filter the access of external dns to only the relevant hosted zone
 module "external_dns_irsa_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
   version = "~> 5.30"
 
-  role_name = "${var.cluster_name}-external-dns"
+  role_name        = "${var.cluster_name}-external-dns"
   role_name_prefix = null
 
 
@@ -50,7 +50,7 @@ module "external_dns_irsa_role" {
   }
 }
 
-# 2. Install the ExternalDNS Helm Chart
+# Install the ExternalDNS Helm Chart
 resource "helm_release" "external_dns" {
   name       = "external-dns"
   repository = "https://kubernetes-sigs.github.io/external-dns/"
@@ -58,17 +58,17 @@ resource "helm_release" "external_dns" {
   namespace  = "kube-system"
   version    = var.external_dns_version
 
-  wait = true
-  atomic = true
-  timeout = 600
-  replace = true
-  force_update = true
+  atomic          = true
   cleanup_on_fail = true
-  recreate_pods = true
-  lint = true
+  force_update    = true
+  lint            = true
+  recreate_pods   = true
+  replace         = true
+  timeout         = 600
+  wait            = true
+  wait_for_jobs   = true
 
-
-values = [
+  values = [
     <<-EOT
     provider: aws
     registry: txt
@@ -93,8 +93,6 @@ values = [
 }
 
 ##### ExternalDNS ends here #####
-
-
 
 
 

@@ -44,7 +44,7 @@ module "eks" {
       use_name_prefix = true # If true, Terraform appends random characters to the name
 
       # Capacity and OS Settings
-      capacity_type  = var.eks_capacity_type                                # Can be "ON_DEMAND" or "SPOT"
+      capacity_type  = var.eks_capacity_type # Can be "ON_DEMAND" or "SPOT"
       instance_types = var.eks_instance_types
       # AL2023 is the new standard. Other options include AL2_x86_64, BOTTLEROCKET_x86_64, etc.
       ami_type = "AL2023_x86_64_STANDARD"

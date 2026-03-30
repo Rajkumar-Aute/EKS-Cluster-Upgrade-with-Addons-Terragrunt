@@ -41,7 +41,7 @@ variable "desired_node_groups_nodes" {
 variable "eks_capacity_type" {
   description = "The capacity type for the EKS node group (e.g., ON_DEMAND or SPOT)"
   type        = string
-  default = "SPOT"
+  default     = "SPOT"
 }
 
 variable "eks_instance_types" {

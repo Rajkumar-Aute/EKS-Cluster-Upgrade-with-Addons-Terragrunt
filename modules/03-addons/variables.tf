@@ -29,6 +29,11 @@ variable "karpenter_version" {
   type        = string
 }
 
+variable "keda_version" {
+  description = "Helm chart version for KEDA"
+  type        = string
+}
+
 variable "cert_manager_version" {
   description = "Helm chart version for cert-manager"
   type        = string

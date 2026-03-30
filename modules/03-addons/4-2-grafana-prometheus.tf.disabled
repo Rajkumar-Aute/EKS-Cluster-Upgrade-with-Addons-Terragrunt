@@ -1,5 +1,3 @@
-# Observability 
-
 ##### Kube-Prometheus-Stack starts here ##### 
 # Install the Kube-Prometheus-Stack (Prometheus, Grafana, Alertmanager)
 resource "helm_release" "kube_prometheus_stack" {
@@ -9,28 +7,25 @@ resource "helm_release" "kube_prometheus_stack" {
   namespace        = "monitoring"
   create_namespace = true
   version          = var.kube_prometheus_stack_version
-  
+
   atomic          = true
   cleanup_on_fail = true
-  force_update = true
-  lint = true  
+  force_update    = true
+  lint            = true
   recreate_pods   = true
-  replace = true
-  timeout       = 600
-  wait          = true
-  wait_for_jobs = true
+  replace         = true
+  timeout         = 600
+  wait            = true
+  wait_for_jobs   = true
 
-  # -------------------------------------------------------------
   # We use 'values' to set a default Grafana password and 
   # bypass the need for the AWS EBS CSI Driver in this lab.
-  # -------------------------------------------------------------
   values = [
     yamlencode({
       grafana = {
         adminPassword = "admin"
         service = {
-          # CHANGE THIS from LoadBalancer to ClusterIP
-          type = "ClusterIP" 
+          type = "ClusterIP"
           # type: LoadBalancer
           #   annotations:
           #     # This tells the AWS LB Controller to create an internet-facing balancer
@@ -40,7 +35,7 @@ resource "helm_release" "kube_prometheus_stack" {
           #     service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
         }
       }
-      
+
       # Keep these as null to avoid needing EBS CSI driver (Ephemeral storage)
       prometheus = {
         prometheusSpec = {

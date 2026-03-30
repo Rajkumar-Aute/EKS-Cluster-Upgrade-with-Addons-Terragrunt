@@ -1,6 +1,6 @@
 ##### Trivy Operator starts here #####
 
-# INSTALL TRIVY OPERATOR
+# install trivy operator
 
 resource "helm_release" "trivy_operator" {
   name             = "trivy-operator"
@@ -10,15 +10,20 @@ resource "helm_release" "trivy_operator" {
   create_namespace = true
   version          = var.trivy_operator_version
 
-  # Proactively give Karpenter 10 minutes to provision nodes if needed
+  atomic          = true
+  cleanup_on_fail = true
+  force_update    = true
+  lint            = true
+  recreate_pods   = true
+  replace         = true
+  timeout         = 600
+  wait            = true
+  wait_for_jobs   = true
 
-  timeout = 600
-
-  # -------------------------------------------------------------
   # We use 'values' to tune the operator for a cleaner experience.
   # 'ignoreUnfixed' prevents Trivy from yelling about vulnerabilities 
   # that don't even have a patch available from the vendor yet.
-  # -------------------------------------------------------------
+
   values = [
     <<-EOT
     trivy:
@@ -27,10 +32,6 @@ resource "helm_release" "trivy_operator" {
       scannerReportTTL: "24h" # Automatically delete old scan reports after 24 hours
     EOT
   ]
-  # depends_on = [
-  #   helm_release.aws_load_balancer_controller
-  # ]
 }
-
 
 ##### Trivy Operator ends here #####
