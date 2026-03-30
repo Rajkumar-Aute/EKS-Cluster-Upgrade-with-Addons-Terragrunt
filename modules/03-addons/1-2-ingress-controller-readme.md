@@ -108,11 +108,9 @@ spec:
               number: 80
 ```
 
-Apply and Test with Host Header:
-
-Bash
+```Bash
 kubectl apply -f nginx-test.yaml
-
 # Test using the host header (simulates a DNS entry)
-curl -H "Host: test.app.eks.devsecopsguru.in" http://$NLB_URL
+curl -H "Host: test.eks.devsecopsguru.in" http://$NLB_URL
+```
 Success: You should see the response: __NGINX is working!__

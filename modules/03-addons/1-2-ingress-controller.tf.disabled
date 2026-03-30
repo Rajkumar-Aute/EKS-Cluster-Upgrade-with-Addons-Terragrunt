@@ -8,12 +8,20 @@ resource "helm_release" "nginx_ingress" {
   namespace        = "ingress-nginx"
   create_namespace = true
   version          = var.nginx_ingress_version
-  timeout          = 900
+  
+  atomic          = true
+  cleanup_on_fail = true
+  force_update    = true
+  lint            = true
+  recreate_pods   = true
+  replace         = true
+  timeout         = 600
+  wait            = true
+  wait_for_jobs   = true
 
   # The magic happens in these annotations. They tell the AWS Load 
   # Balancer Controller to build a single, high-performance Network 
   # Load Balancer (NLB) to sit in front of NGINX.
-  # -------------------------------------------------------------
   values = [
     <<-EOT
     controller:
