@@ -1,17 +1,17 @@
 locals {
-  environment     = "dev"
-  aws_region      = "us-east-1"
-  cluster_name    = "eks-upgrade-lab-${local.environment}"
-  cluster_version = "1.34"
+  environment        = "dev"
+  aws_region         = "us-east-1"
+  cluster_name       = "eks-upgrade-lab-${local.environment}"
+  cluster_version    = "1.34"
   eks_capacity_type  = "SPOT"
-  eks_instance_types     = ["c6a.large", "c7a.large", "m6a.large", "m7a.large"]
+  eks_instance_types = ["c6a.large", "c7a.large", "m6a.large", "m7a.large"]
 
   domain_name = "eks.devsecopsguru.in"
 
   min_node_groups_nodes     = 1
   max_node_groups_nodes     = 3
   desired_node_groups_nodes = 2
-  
+
   # terraform provider version 
   provider_versions = {
     aws        = "5.0"
@@ -19,7 +19,7 @@ locals {
     kubernetes = "3.0"
     kubectl    = "1.14.0"
   }
-  
+
   karpenter_version             = "1.0.1"
   keda_version                  = "2.16.0"
   cert_manager_version          = "v1.14.4"

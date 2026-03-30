@@ -4,7 +4,7 @@ download_dir = "C:/temp/tg"
 
 locals {
   # Automatically load environment-level variables
-  env_vars = read_terragrunt_config(find_in_parent_folders("env.hcl"))
+  env_vars         = read_terragrunt_config(find_in_parent_folders("env.hcl"))
   tf_provider_vars = local.env_vars.locals.provider_versions
 
   # Extract the variables for easier use in this file
