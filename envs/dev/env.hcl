@@ -20,10 +20,6 @@ locals {
     kubectl    = "1.14.0"
   }
   
-  # Module Versions
-  module_eks_version = "~> 20.37"
-
-
   karpenter_version             = "1.0.1"
   cert_manager_version          = "v1.14.4"
   nginx_ingress_version         = "4.10.1"

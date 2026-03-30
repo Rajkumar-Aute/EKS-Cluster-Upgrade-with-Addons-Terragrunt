@@ -1,7 +1,7 @@
 # Provision the EKS Cluster
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  #version = "~> 20.37" # variable set in env.hcl file
+  version = "~> 20.37"
 
   cluster_name    = var.cluster_name
   cluster_version = var.cluster_version
