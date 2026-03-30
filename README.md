@@ -16,6 +16,8 @@ Open your Git Bash terminal and run:
 # 1. Tell Git to ignore the Windows 260-character path limit
 git config --global core.longpaths true
 
+# Configure AWS config with aws secret key and secret access key.
+aws configure
 ```
 
 ## Step 1: Prepare the Terraform Code
@@ -34,80 +36,34 @@ cd EKS-Cluster-Upgrade-with-Addons-Terragrunt
 How to Build the Lab (Apply)
 Because Terragrunt understands the dependency graph, you do not need to apply the layers one by one. Navigate to the root of your environment and run the run-all command.
 
+#### Note: remove .disabled from ./modules/03-addons directory to enable required addons. and you can verify the addons after deploying by reading respective addon readme file.
+
 ```Bash
 # Navigate to the environment folder
 cd envs/dev
 
-# Apply the entire stack
+# Apply the entire stack, terragrunt will automatically do init, if we get error to initiate the terragrunt or terraform we need to run below command.
 terragrunt run-all init -upgrade --terragrunt-non-interactive
+# All module build automatically, first network, followed by the cluster, and finally the addons.
 terragrunt run-all apply --terragrunt-non-interactive
-# It will ask for conformation type "y"
-# Terragrunt will automatically build the Network first, followed by the Cluster, and finally the Addons.
-# terragrunt run-all apply --terragrunt-exclude-dir "03-addons"    --terragrunt-non-interactive
-# terragrunt run-all apply --terragrunt-exclude-dir "01-network" --terragrunt-exclude-dir "02-cluster" --terragrunt-exclude-dir "03-addons" --terragrunt-non-interactive
 
+# Terragrunt will automatically build the Network first, followed by the Cluster, and  no Addons will be installed as by using flag "--terragrunt-exclude-dir "03-addons"".
+terragrunt run-all apply --terragrunt-exclude-dir "03-addons"    --terragrunt-non-interactive
+# It will not ask for conformation type "y" as we added flag "--terragrunt-non-interactive
 ```
-
-
-
-
-
 
 
 # How to Teardown the Lab (Destroy)
 Destroying an EKS cluster with active LoadBalancers and Admission Webhooks usually requires heavy manual intervention.
 
-### Step 1: Authenticate to the Cluster
-Before you can clean up Kubernetes, ensure your terminal is actively communicating with your EKS control plane.
-
-```Bash
-aws eks update-kubeconfig --name eks-upgrade-lab-<env> --region us-east-1
-```
-
-### Step 2: Nuke the Admission Webhooks (Kyverno)
-Kyverno intercepts API requests to validate them. If you delete the cluster nodes before deleting these webhooks, the EKS control plane will panic because it can't reach Kyverno to validate the deletion of other resources.
-
-```Bash
-# Delete Validating Webhooks
-kubectl delete validatingwebhookconfigurations -l app.kubernetes.io/name=kyverno --ignore-not-found
-
-# Delete Mutating Webhooks
-kubectl delete mutatingwebhookconfigurations -l app.kubernetes.io/name=kyverno --ignore-not-found
-```
-
-### Step 3: Delete the Load Balancers (Nginx)
-The Nginx Ingress Controller spun up a physical AWS Elastic Load Balancer (ELB). We need to tell AWS to delete this hardware before Terraform rips out the VPC subnets underneath it.
-
-```Bash
-kubectl delete svc -A -l app.kubernetes.io/managed-by=Helm
-# Note: This command will hang for a few minutes while AWS physically deletes the ELB. Let it finish.
-```
-
-### Step 4: Force-Clear Stubborn Finalizers (The Backup Plan)
-If Step 3 hangs indefinitely (meaning the AWS Load Balancer Controller is already dead and can't perform the deletion), you must manually break the lock on the service. Open a second terminal window and run:
-
-``` Bash
-kubectl patch svc ingress-nginx-controller -n ingress-nginx -p '{"metadata":{"finalizers":null}}' --type merge
-# Once you run this, your stuck command from Step 3 should immediately complete.
-```
-
-### Step 5: Clean Up Persistent Storage (EBS Volumes)
-If you deployed any stateful applications that requested persistent storage (PVCs), delete them now so the underlying AWS EBS volumes are cleanly detached and deleted, preventing zombie charges on your AWS bill.
-
-```Bash
-kubectl delete pvc --all -A
-```
-
-### Step 6: Execute the Global Destroy
+## Step 2: Execute the Global Destroy
 Once the webhooks are gone, the ELBs are deleted, and the PVCs are cleared, your cluster is completely "hollowed out" and safe to destroy.
 
 Navigate back to your environment root and trigger Terragrunt:
 
 ```Bash
-# Ensure your local kubeconfig is updated so the hook can talk to the cluster
-aws eks update-kubeconfig --name EKS-upgrade-lab --region us-east-1
-
 # Trigger the global destroy
 cd env/dev
 terragrunt run-all destroy --terragrunt-ignore-external-dependencies --terragrunt-non-interactive
+# by adding some time terragrunt might fail due to dependencies so by adding flag "--terragrunt-ignore-external-dependencies" it will ignore dependencies.
 ```
