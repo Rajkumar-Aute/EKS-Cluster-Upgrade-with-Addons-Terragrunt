@@ -50,21 +50,21 @@ module "eks" {
       ami_type = "AL2023_x86_64_STANDARD"
 
 
-      # This ensures the Kubelet is started with the 110 pods limit.
-      cloudinit_post_nodeadm = [
-        {
-          content_type = "application/node.eks.aws"
-          content      = <<-EOT
-            ---
-            apiVersion: node.eks.aws/v1alpha1
-            kind: NodeConfig
-            spec:
-              kubelet:
-                config:
-                  maxPods: 110
-          EOT
-        }
-      ]
+      # # This ensures the Kubelet is started with the 110 pods limit.
+      # cloudinit_post_nodeadm = [
+      #   {
+      #     content_type = "application/node.eks.aws"
+      #     content      = <<-EOT
+      #       ---
+      #       apiVersion: node.eks.aws/v1alpha1
+      #       kind: NodeConfig
+      #       spec:
+      #         kubelet:
+      #           config:
+      #             maxPods: 110
+      #     EOT
+      #   }
+      # ]
 
       # IAM (Identity & Access Management)
       iam_role_name            = "spot-node-group-role"
