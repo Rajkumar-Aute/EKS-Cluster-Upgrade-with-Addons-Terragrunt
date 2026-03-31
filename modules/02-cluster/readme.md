@@ -55,30 +55,8 @@ aws eks update-kubeconfig --region <your-region> --name <your-cluster-name>
 kubectl get nodes
 ```
 
-## Step 4: Critical Verification (The 110 Pods Proof)
-This is the most important part of your lab. We need to verify that the AL2023 NodeConfig actually applied the maxPods override.
 
-1. Check Node Capacity
-Run this command to see the maximum pod capacity for your new nodes:
-
-```Bash
-kubectl get nodes -o custom-columns=NAME:.metadata.name,MAX_PODS:.status.capacity.pods,IMAGE:.status.nodeInfo.osImage
-```
-Success: MAX_PODS should show 110.
-Verification: IMAGE should show Amazon Linux 2023.
-
-2. Check Kubelet Arguments
-If you want to see the "under the hood" config that your cloudinit generated:
-
-```Bash
-# Get the name of one of your nodes
-NODE_NAME=$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')
-
-# Check the Kubelet configuration for that node
-kubectl get --raw "/api/v1/nodes/$NODE_NAME/proxy/configz" | jq '.kubeletconfig.maxPods'
-```
-
-## Step 5: IRSA & Add-ons Readiness
+## Step 4: IRSA & Add-ons Readiness
 Since you'll be moving to 03-addons next, verify the OIDC provider is ready.
 
 1. Verify OIDC Issuer
@@ -94,19 +72,3 @@ Ensure the VPC-CNI, CoreDNS, and Kube-Proxy are running happily on your Spot nod
 kubectl get pods -A
 ```
 Note: Since you have a taint set to PREFER_NO_SCHEDULE for Spot, system pods should schedule there unless you have other nodes available.
-
-## Step 6: High-Density Pressure Test (Optional)
-To truly prove the 110 pods fix, let's try to schedule more than the default 29 pods (which is the usual limit for .large instances).
-
-1. Deploy 50 Nginx Pods
-
-```Bash
-kubectl create deployment density-test --image=nginx --replicas=50
-```
-
-2. Watch the Scaling
-
-```Bash
-kubectl get deployment density-test -w
-```
-If your maxPods was stuck at 29, the deployment would hang with 20+ pods in Pending. Since you set it to 110, all 50 should reach Running on a single node!
