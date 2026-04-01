@@ -30,7 +30,7 @@ locals {
   external_dns_version          = "1.14.3"
   external_secrets_version      = "0.9.13"
   kyverno_version               = "3.2.5"
-  trivy_operator_version        = "0.32.1"
+  trivy_operator_version        = "0.30.2"
   metrics_server_version        = "3.12.1"
   kube_prometheus_stack_version = "58.2.2"
 
@@ -45,7 +45,7 @@ locals {
   #  external_dns_version          = "1.15.0"
   #  external_secrets_version      = "0.10.4"
   #  kyverno_version               = "3.3.0"
-  #  trivy_operator_version        = "0.21.0"
+  #  trivy_operator_version        = "0.32.1"
   #  metrics_server_version        = "3.12.2"
   #  kube_prometheus_stack_version = "61.3.0"
 }
