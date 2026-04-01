@@ -64,6 +64,26 @@ resource "helm_release" "aws_load_balancer_controller" {
 }
 
 
+# The Auto-Cleanup Resource
+resource "null_resource" "lbc_cleanup" {
+  # This resource doesn't do anything during 'apply'
+  # It only triggers during 'destroy'
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<EOT
+      echo "Cleaning up Load Balancer resources before destroying the controller..."
+      # Delete all Ingresses (ALBs) and Services (NLBs) managed by the controller
+      kubectl delete ingress --all --all-namespaces --ignore-not-found
+      kubectl delete service -l service.beta.kubernetes.io/aws-load-balancer-type=external --all-namespaces --ignore-not-found
+      
+      # Optional: Force remove finalizers if they get stuck
+      # kubectl patch ingress <name> -p '{"metadata":{"finalizers":[]}}' --type=merge
+    EOT
+  }
+
+  depends_on = [helm_release.aws_load_balancer_controller]
+}
+
 ##### AWS Load Balancer Controller ends here #####
 
 
