@@ -78,15 +78,3 @@ spec:
 kubectl get pods -l app=keda-test-app -w
 ```
 Success Criteria: You should see the pod count jump from 1 to 5.
-
-#### Step 5: High-Density Node Check (110 Pods Proof)
-Since you are optimizing for pod density, let's verify KEDA isn't blocked by node capacity.
-
-```Bash
-# Check if your keda-test-app pods are packing onto one node
-kubectl get pods -l app=keda-test-app -o wide
-
-# Check the remaining capacity of that node
-kubectl describe node <node-name-from-above> | grep -A 5 "Allocated resources"
-```
-Verification: Ensure the "Non-terminated Pods" count is increasing beyond the default 29-pod limit without errors.

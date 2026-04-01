@@ -1,5 +1,12 @@
 
 ##### NGINX Ingress Controller starts here #####
+
+# Wait for the AWS Load Balancer Controller to be fully up and running before installing NGINX Ingress Controller
+resource "time_sleep" "wait_for_lbc" {
+  depends_on = [helm_release.aws_load_balancer_controller]
+  create_duration = "30s"
+}
+
 # Install NGINX Ingress Controller
 resource "helm_release" "nginx_ingress" {
   name             = "ingress-nginx"
@@ -22,24 +29,26 @@ resource "helm_release" "nginx_ingress" {
   # The magic happens in these annotations. They tell the AWS Load 
   # Balancer Controller to build a single, high-performance Network 
   # Load Balancer (NLB) to sit in front of NGINX.
-  values = [
+values = [
     <<-EOT
     controller:
-      replicaCount: 2 # Run two instances of NGINX for high availability
+      replicaCount: 2
       service:
+        loadBalancerClass: "service.k8s.aws/nlb"
+        
         annotations:
-          # Use the AWS Load Balancer Controller (external) instead of the legacy in-tree provider
-          service.beta.kubernetes.io/aws-load-balancer-type: "external"
-          
-          # Provision an NLB that routes traffic directly to the pod IP addresses
-          service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
-          
-          # Ensure the load balancer is public
-          service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
-          
-      # Make NGINX the default ingress class for the cluster
+          # Use the AWS Load Balancer Controller
+          service.beta.kubernetes.io/aws-load-balancer-type: "external"          
+          service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"          
+          service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing" # Public Facing
+          service.beta.kubernetes.io/aws-load-balancer-attributes: "load_balancing.cross_zone.enabled=true"          # Recommended for NLB stability
+
+      # Make NGINX the default ingress class
       ingressClassResource:
+        name: nginx
+        enabled: true
         default: true
+        controllerValue: "k8s.io/ingress-nginx"
     EOT
   ]
   depends_on = [

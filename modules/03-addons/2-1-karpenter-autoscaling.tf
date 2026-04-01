@@ -106,14 +106,14 @@ resource "helm_release" "karpenter" {
   chart               = "karpenter"
   version             = var.karpenter_version
 
-  atomic          = true
-  cleanup_on_fail = true
+  atomic          = false
+  cleanup_on_fail = false
   force_update    = true
   lint            = true
   recreate_pods   = true
   replace         = true
-  timeout         = 600
-  wait            = true
+  timeout         = 900
+  wait            = false
   wait_for_jobs   = true
 
   values = [
@@ -129,15 +129,10 @@ resource "helm_release" "karpenter" {
       interruptionQueue: ${module.karpenter.queue_name}
       featureGates:
         drift: true
-    
-    controller:
-      resources:
-        requests:
-          cpu: 100m
-          memory: 512Mi
-        limits:
-          cpu: 1
-          memory: 1Gi
+    hostNetwork: true
+    webhook:
+      enabled: true
+      port: 8443
     EOT
   ]
 }
