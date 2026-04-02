@@ -1,9 +1,1 @@
-How to Deploy This Layer
-Navigate into the folder: cd 01-network
-
-Initialize: terraform init
-
-Apply: 
-```
-terraform apply -var-file="../learning.tfvars"
-```
+# Used Default VPC for cost saving, in production we use Custom VPC with only private access.
