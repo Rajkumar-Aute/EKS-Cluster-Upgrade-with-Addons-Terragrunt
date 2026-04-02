@@ -3,7 +3,7 @@
 
 # Wait for the AWS Load Balancer Controller to be fully up and running before installing NGINX Ingress Controller
 resource "time_sleep" "wait_for_lbc" {
-  depends_on = [helm_release.aws_load_balancer_controller]
+  depends_on      = [helm_release.aws_load_balancer_controller]
   create_duration = "30s"
 }
 
@@ -15,7 +15,7 @@ resource "helm_release" "nginx_ingress" {
   namespace        = "ingress-nginx"
   create_namespace = true
   version          = var.nginx_ingress_version
-  
+
   atomic          = true
   cleanup_on_fail = true
   force_update    = true
@@ -29,7 +29,7 @@ resource "helm_release" "nginx_ingress" {
   # The magic happens in these annotations. They tell the AWS Load 
   # Balancer Controller to build a single, high-performance Network 
   # Load Balancer (NLB) to sit in front of NGINX.
-values = [
+  values = [
     <<-EOT
     controller:
       replicaCount: 2

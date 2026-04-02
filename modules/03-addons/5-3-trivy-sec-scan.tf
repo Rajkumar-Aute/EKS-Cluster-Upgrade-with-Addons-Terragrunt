@@ -16,7 +16,7 @@ resource "helm_release" "trivy_operator" {
   lint            = true
   recreate_pods   = true
   replace         = true
-  timeout         = 600
+  timeout         = 900
   wait            = true
   wait_for_jobs   = true
 

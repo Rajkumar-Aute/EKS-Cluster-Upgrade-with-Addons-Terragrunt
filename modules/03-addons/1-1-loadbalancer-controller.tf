@@ -65,23 +65,66 @@ resource "helm_release" "aws_load_balancer_controller" {
 
 
 # The Auto-Cleanup Resource
-resource "null_resource" "lbc_cleanup" {
-  # This resource doesn't do anything during 'apply'
-  # It only triggers during 'destroy'
+resource "null_resource" "eks_deep_cleanup" {
+  triggers = {
+    cluster_name = var.cluster_name
+    region       = var.aws_region
+  }
+
   provisioner "local-exec" {
     when    = destroy
     command = <<EOT
-      echo "Cleaning up Load Balancer resources before destroying the controller..."
-      # Delete all Ingresses (ALBs) and Services (NLBs) managed by the controller
+      echo "--- Starting Mandatory EKS Cleanup ---"
+
+      # 1. Kubernetes Level: Delete Load Balancers (ALB/NLB)
+      echo "Deleting K8s Ingress and Services..."
       kubectl delete ingress --all --all-namespaces --ignore-not-found
       kubectl delete service -l service.beta.kubernetes.io/aws-load-balancer-type=external --all-namespaces --ignore-not-found
       
-      # Optional: Force remove finalizers if they get stuck
-      # kubectl patch ingress <name> -p '{"metadata":{"finalizers":[]}}' --type=merge
+      # 1.5 AWS Level: Target Group Cleanup (NEW)
+      # These often stay behind even after the Load Balancer is gone
+      echo "Cleaning up orphaned Target Groups for cluster: ${self.triggers.cluster_name}..."
+      TG_ARNS=$(aws elbv2 describe-target-groups --region ${self.triggers.region} --query "TargetGroups[?contains(TargetGroupName, 'k8s-')].TargetGroupArn" --output text)
+      for tg in $TG_ARNS; do
+        echo "Deleting Target Group: $tg"
+        aws elbv2 delete-target-group --region ${self.triggers.region} --target-group-arn $tg || echo "Target group $tg already gone."
+      done
+
+      # 2. ASG Level: Scale to Zero
+      echo "Scaling Auto Scaling Groups to 0..."
+      ASG_NAMES=$(aws autoscaling describe-auto-scaling-groups --region ${self.triggers.region} --query "AutoScalingGroups[?contains(AutoScalingGroupName, '${self.triggers.cluster_name}')].AutoScalingGroupName" --output text)
+      for asg in $ASG_NAMES; do
+        aws autoscaling update-auto-scaling-group --region ${self.triggers.region} --auto-scaling-group-name $asg --min-size 0 --max-size 0 --desired-capacity 0
+        echo "Scaled $asg to zero."
+      done
+
+      # 3. EC2 Level: Delete Orphaned Launch Templates
+      echo "Deleting related Launch Templates..."
+      LT_IDS=$(aws ec2 describe-launch-templates --region ${self.triggers.region} --query "LaunchTemplates[?contains(LaunchTemplateName, '${self.triggers.cluster_name}')].LaunchTemplateId" --output text)
+      for lt in $LT_IDS; do
+        aws ec2 delete-launch-template --region ${self.triggers.region} --launch-template-id $lt
+        echo "Deleted Launch Template: $lt"
+      done
+
+      # 4. Finalizer Cleanup (Safety Net)
+      # Removes the 'blocker' so Kubernetes allows the namespace to delete
+      echo "Force-clearing stuck finalizers..."
+      kubectl get ingress -A -o json | jq -r '.items[] | [.metadata.name, .metadata.namespace] | @tsv' | while read name ns; do
+        kubectl patch ingress $name -n $ns -p '{"metadata":{"finalizers":[]}}' --type=merge --ignore-not-found
+      done
+
+      # 5. Network Level: ENI Cleanup (The Final Boss)
+      # Often left by VPC-CNI or LBC; blocks Subnet deletion
+      echo "Detecting orphaned Network Interfaces..."
+      ENI_IDS=$(aws ec2 describe-network-interfaces --region ${self.triggers.region} --filters "Name=description,Values=*${self.triggers.cluster_name}*" --query "NetworkInterfaces[*].NetworkInterfaceId" --output text)
+      for eni in $ENI_IDS; do
+        echo "Deleting ENI: $eni"
+        aws ec2 delete-network-interface --region ${self.triggers.region} --network-interface-id $eni || echo "ENI $eni in use, skipping..."
+      done
+
+      echo "--- Cleanup Sequence Complete ---"
     EOT
   }
-
-  depends_on = [helm_release.aws_load_balancer_controller]
 }
 
 ##### AWS Load Balancer Controller ends here #####

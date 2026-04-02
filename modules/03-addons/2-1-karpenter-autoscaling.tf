@@ -45,8 +45,8 @@ resource "aws_ec2_tag" "public_subnet_lb_tags" {
 
 # Karpenter Module
 module "karpenter" {
-  source  = "terraform-aws-modules/eks/aws//modules/karpenter"
-  version = "~> 20.37"
+  source       = "terraform-aws-modules/eks/aws//modules/karpenter"
+  version      = "~> 20.37"
   cluster_name = var.cluster_name
 
   # Enable permissions required for Karpenter v1.0+
