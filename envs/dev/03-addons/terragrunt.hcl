@@ -33,7 +33,7 @@ dependency "cluster" {
   }
 }
 
-# Inject all variables into the Addons module (TOP LEVEL)
+# Inject all variables into the Addons module
 inputs = {
   # Static versions and region from env.hcl
   aws_region                    = local.env_vars.locals.aws_region
