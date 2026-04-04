@@ -67,3 +67,8 @@ cd env/dev
 terragrunt run-all destroy --terragrunt-ignore-external-dependencies --terragrunt-non-interactive
 # by adding some time terragrunt might fail due to dependencies so by adding flag "--terragrunt-ignore-external-dependencies" it will ignore dependencies.
 ```
+
+Update kubeconfig file
+```
+aws eks update-kubeconfig --region <your-region> --name <your-cluster-name>
+```

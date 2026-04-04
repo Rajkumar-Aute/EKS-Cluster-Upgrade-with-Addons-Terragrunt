@@ -83,3 +83,91 @@ kubectl get pods -A
 ```
 
 Note: Since you have a taint set to PREFER_NO_SCHEDULE for Spot, system pods should schedule there unless you have other nodes available.
+
+
+#######################################################
+
+Deploy application on EKS Auto Mode worker nodes.
+
+Auto Mode work is the nodeSelector. Because we enabled the *general-purpose and system* node pools in Terraform, Auto Mode will see these manifests, realize there are no nodes available, and automatically provision a Spot EC2 instance.
+
+# Step: 1:
+
+Create yaml file app-spot.yaml
+```YAML
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: expo-sample-app
+  namespace: default
+  labels:
+    app: expo-sample
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: expo-sample
+  template:
+    metadata:
+      labels:
+        app: expo-sample
+    spec:
+      # --- EKS AUTO MODE SPECIFIC CONFIG ---
+      nodeSelector:
+        # 1. Force the app onto the Auto Mode managed pool
+        eks.amazonaws.com/compute-type: auto
+        # 2. Tell Auto Mode to specifically use SPOT instances for cost savings
+        eks.amazonaws.com/capacityType: SPOT
+      
+      containers:
+      - name: web-server
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        resources:
+          # Auto Mode uses these numbers to pick the EC2 instance size!
+          requests:
+            cpu: "250m"
+            memory: "512Mi"
+          limits:
+            cpu: "500m"
+            memory: "1Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: expo-sample-service
+  namespace: default
+spec:
+  selector:
+    app: expo-sample
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  # Since you enabled Auto Networking in Terraform, 
+  # EKS will automatically create an AWS NLB for this service.
+  type: LoadBalancer
+```
+
+
+## Step 2: Deploy and Verify
+Apply the manifest:
+
+```
+kubectl apply -f app-spot.yaml
+```
+
+For the first 60–90 seconds, your pods will be in Pending state. You can watch Auto Mode provision the node by running:
+
+```
+# Watch the nodes appear in real-time
+kubectl get nodes -w
+```
+
+Check the Instance Type:
+Once the node appears, check if it actually created a Spot instance and what type it chose:
+
+```
+kubectl get nodes -l eks.amazonaws.com/capacityType=SPOT
+```
