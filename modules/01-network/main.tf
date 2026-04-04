@@ -25,4 +25,3 @@ locals {
     if s.availability_zone != "${var.aws_region}e"
   ]
 }
-

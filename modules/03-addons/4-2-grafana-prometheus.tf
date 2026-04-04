@@ -18,8 +18,7 @@ resource "helm_release" "kube_prometheus_stack" {
   wait            = true
   wait_for_jobs   = true
 
-  # We use 'values' to set a default Grafana password and 
-  # bypass the need for the AWS EBS CSI Driver in this lab.
+  # We use 'values' to set a default Grafana password and bypass the need for the AWS EBS CSI Driver in this lab.
   values = [
     yamlencode({
       grafana = {

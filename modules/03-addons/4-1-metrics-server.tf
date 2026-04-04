@@ -17,13 +17,8 @@ resource "helm_release" "metrics_server" {
   wait            = true
   wait_for_jobs   = true
 
-
-
   # We use 'values' here to pass raw YAML. 
   # EKS sometimes struggles with self-signed Kubelet certificates 
-  # out of the box, so we tell Metrics Server to bypass strict TLS 
-  # validation for internal node communication.
-
   values = [
     <<-EOT
     defaultArgs:
@@ -37,5 +32,3 @@ resource "helm_release" "metrics_server" {
 }
 
 ##### Metrics Server ends here #####
-
-

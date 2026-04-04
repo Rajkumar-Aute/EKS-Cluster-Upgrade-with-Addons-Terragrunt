@@ -1,7 +1,9 @@
+# Important file to include for Terragrunt to work with Terraform code.
 include "root" {
   path = find_in_parent_folders("root.hcl")
 }
 
+# This terraform module need need some inputs to mapping with other modules details.
 dependency "network" {
   config_path = "../01-network"
 }

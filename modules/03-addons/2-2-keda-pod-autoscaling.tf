@@ -26,7 +26,7 @@ module "keda_irsa_role" {
   }
 }
 
-# Install KEDA via Helm
+# Install KEDA using Helm
 resource "helm_release" "keda" {
   name             = "keda"
   repository       = "https://kedacore.github.io/charts"
@@ -55,7 +55,6 @@ resource "helm_release" "keda" {
         }
       }
 
-      # Operator Settings
       operator = {
         replicaCount = 1
       }

@@ -1,7 +1,6 @@
 ##### Trivy Operator starts here #####
 
-# install trivy operator
-
+# install trivy operator using Helm Chart
 resource "helm_release" "trivy_operator" {
   name             = "trivy-operator"
   repository       = "https://aquasecurity.github.io/helm-charts/"
@@ -19,10 +18,6 @@ resource "helm_release" "trivy_operator" {
   timeout         = 900
   wait            = true
   wait_for_jobs   = true
-
-  # We use 'values' to tune the operator for a cleaner experience.
-  # 'ignoreUnfixed' prevents Trivy from yelling about vulnerabilities 
-  # that don't even have a patch available from the vendor yet.
 
   values = [
     <<-EOT

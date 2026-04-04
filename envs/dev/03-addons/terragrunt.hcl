@@ -1,24 +1,30 @@
-# Load the global environment variables
-locals {
-  env_vars = read_terragrunt_config(find_in_parent_folders("env.hcl"))
-}
-
-terraform {
-  source = "../../../modules/03-addons"
-}
-
-# Include root config (Remote State/Providers)
+# This is the "hook" that pulls in the remote_state and providers configurations from the root.hcl file.
 include "root" {
   path = find_in_parent_folders("root.hcl")
 }
 
+# Load the global environment variables from env/<respective-env>/env.hcl file
+locals {
+  env_vars = read_terragrunt_config(find_in_parent_folders("env.hcl"))
+}
+
+# Where the terraform code resides.
+terraform {
+  source = "../../../modules/03-addons"
+}
+
 dependency "network" {
   config_path = "../01-network"
+  
+  mock_outputs = {
+    vpc_id = "vpc-12345"
+  }
 }
 
 dependency "cluster" {
   config_path = "../02-cluster"
 
+  # Dummy output as terragrunt expects while running plan before the cluster exists
   mock_outputs = {
     cluster_endpoint                   = "https://mock.eks.amazonaws.com"
     cluster_certificate_authority_data = "bW9jaw=="
@@ -27,7 +33,7 @@ dependency "cluster" {
   }
 }
 
-# Inject all variables into the Addons module
+# Inject all variables into the Addons module (TOP LEVEL)
 inputs = {
   # Static versions and region from env.hcl
   aws_region                    = local.env_vars.locals.aws_region

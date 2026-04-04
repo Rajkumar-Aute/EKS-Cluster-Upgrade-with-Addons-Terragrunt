@@ -1,7 +1,8 @@
+# This is the file same like env.tfvars file will update all the environment specific values.
 locals {
   environment  = "dev"
   aws_region   = "us-east-1"
-  cluster_name = "eks-upgrade-lab-${local.environment}"
+  cluster_name = "eks-${local.environment}"
 
   eks_capacity_type  = "SPOT"
   eks_instance_types = ["c6a.large", "c7a.large", "m6a.large", "m7a.large"]
@@ -20,7 +21,7 @@ locals {
     kubectl    = "1.14.0"
   }
 
-
+  # comment this variables values for EKS upgrade practice, and uncomment below versions.
   cluster_version               = "1.34"
   karpenter_version             = "1.0.1"
   keda_version                  = "2.15.1"

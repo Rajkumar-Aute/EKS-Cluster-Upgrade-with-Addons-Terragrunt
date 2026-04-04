@@ -17,4 +17,3 @@ variable "cluster_certificate_authority_data" {
   type    = string
   default = ""
 }
-

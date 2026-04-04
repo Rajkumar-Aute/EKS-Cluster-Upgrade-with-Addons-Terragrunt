@@ -48,8 +48,6 @@ module "karpenter" {
   source       = "terraform-aws-modules/eks/aws//modules/karpenter"
   version      = "~> 20.37"
   cluster_name = var.cluster_name
-
-  # Enable permissions required for Karpenter v1.0+
   enable_v1_permissions = true
 
   # Create IAM Role for Service Accounts (IRSA) for the Karpenter controller pods
@@ -64,8 +62,6 @@ module "karpenter" {
   # Create SQS Queue and EventBridge rules to gracefully handle Spot instance interruptions
   enable_spot_termination = true
 }
-
-# The PassRole Permissions (Fix for the Reconciler Error)
 
 resource "aws_iam_role_policy" "karpenter_controller_pass_role" {
   name = "KarpenterControllerPassRole"
@@ -94,8 +90,7 @@ resource "aws_iam_role_policy" "karpenter_controller_pass_role" {
   })
 }
 
-# Install the Karpenter Helm Chart
-
+# Install the Karpenter using Helm Chart
 resource "helm_release" "karpenter" {
   namespace           = "karpenter"
   create_namespace    = true
@@ -138,7 +133,6 @@ resource "helm_release" "karpenter" {
 }
 
 # Karpenter EC2 Node class (The "Where" and "How")
-
 resource "kubectl_manifest" "karpenter_node_class" {
   yaml_body = yamlencode({
     apiVersion = "karpenter.k8s.aws/v1"
@@ -155,9 +149,7 @@ resource "kubectl_manifest" "karpenter_node_class" {
   depends_on = [helm_release.karpenter]
 }
 
-
 # Karpenter node pool (The "What" and "How Much")
-
 resource "kubectl_manifest" "karpenter_node_pool" {
   yaml_body = yamlencode({
     apiVersion = "karpenter.sh/v1"
