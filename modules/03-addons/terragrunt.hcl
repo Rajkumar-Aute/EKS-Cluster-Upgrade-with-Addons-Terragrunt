@@ -1,11 +1,19 @@
+# Important file to include for Terragrunt to work with Terraform code.
 include "root" {
   path = find_in_parent_folders("root.hcl")
+}
+
+dependency "network" {
+  config_path = "../01-network"
+  
+  mock_outputs = {
+    subdomain_zone_id = "mock-zone-id"
+  }
 }
 
 dependency "cluster" {
   config_path = "../02-cluster"
 
-  # Ensure Addons wait if the cluster isn't fully ready
   mock_outputs = {
     cluster_name                       = "mock-cluster"
     cluster_endpoint                   = "https://mock.endpoint"

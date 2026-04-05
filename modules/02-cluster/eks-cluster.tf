@@ -11,7 +11,7 @@ module "eks" {
   }
 
   # create_cloudwatch_log_group = true  
-  # cloudwatch_log_group_retention_in_days = 1   # Optional: Set a short retention to save costs
+  # cloudwatch_log_group_retention_in_days = 1
 
   create_cloudwatch_log_group = false
   create_kms_key              = false
@@ -66,9 +66,9 @@ module "eks" {
       #   }
       # ]
 
-      # IAM (Identity & Access Management)
+      # Identity & Access Management
       iam_role_name            = "spot-node-group-role"
-      iam_role_use_name_prefix = true # If true, Terraform appends random characters to the name to ensure uniqueness
+      iam_role_use_name_prefix = true
       iam_role_additional_policies = {
         AmazonEKSWorkerNodePolicy          = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
         AmazonEKS_CNI_Policy               = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
@@ -76,7 +76,7 @@ module "eks" {
         AmazonSSMManagedInstanceCore       = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
       }
 
-      # Scaling (Requires Cluster Autoscaler or Karpenter to work)
+      # Scaling Requires Cluster Autoscaler or Karpenter to work
       min_size     = var.min_node_groups_nodes     # Absolute minimum number of nodes
       max_size     = var.max_node_groups_nodes     # Maximum number of nodes the autoscaler can spin up
       desired_size = var.desired_node_groups_nodes # The initial target number of nodes to deploy
@@ -84,7 +84,7 @@ module "eks" {
       # Rolling updates and lifecycle settings
       update_config = {
         # Dictates how many nodes can be down simultaneously during a cluster upgrade.
-        # Can be a percentage (max_unavailable_percentage = 33) OR a hard number:
+        # Can be a percentage max_unavailable_percentage = 33 or a hard number:
         max_unavailable = 1
       }
       # If pods refuse to drain (e.g., missing PodDisruptionBudgets), force the update anyway
@@ -133,8 +133,6 @@ module "eks" {
 
       # Allow SSH access (Requires an SG that permits port 22)
       # key_name = "aws-ssh-key"
-
-
 
       # EC2 Metadata Service (IMDSv2) settings for the nodes in this group.
       # Enforcing IMDSv2 helps prevent SSRF attacks on your pods

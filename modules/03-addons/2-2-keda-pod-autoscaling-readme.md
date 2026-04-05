@@ -1,22 +1,21 @@
-# KEDA 
+# KEDA
 
 steps in order to confirm your KEDA installation is fully functional.
 
-#### Step 1: Core Operator Health Check
-First, ensure the KEDA components are running correctly on your manual nodes.
+## Step 1: Core Operator Health Check
 
-```Bash
+1. First, ensure the KEDA components are running correctly on your manual nodes.
+
+```
 kubectl get pods -n keda -o wide
 ```
-
-What to look for: You should see three pods: keda-operator, keda-metrics-apiserver, and keda-admission-webhooks.
-
+What to look for: You should see three pods: __keda-operator, keda-metrics-apiserver, and keda-admission-webhooks.__  
 Verification: All pods must be in the Running state. Under the NODE column, verify they are running on your ip-172-31-x-x managed nodes.
 
-#### Step 2: IRSA (IAM Role) Verification
+## Step 2: IRSA (IAM Role) Verification
 KEDA needs to "assume" an IAM role to talk to AWS services (like SQS or CloudWatch).
 
-```Bash
+```
 # Describe the ServiceAccount to ensure the annotation is present
 kubectl describe sa keda-operator -n keda
 
@@ -33,23 +32,26 @@ AWS_WEB_IDENTITY_TOKEN_FILE (The Token) — CRITICAL
 AWS_STS_REGIONAL_ENDPOINTS (Set to regional)
 AWS_DEFAULT_REGION (e.g., us-east-1)
 
-### Step 3: Metrics API Registration
-KEDA acts as an "Extension API Server." It tells Kubernetes how to handle external metrics.
+## Step 3: Metrics API Registration
 
-```Bash
+1. KEDA acts as an "Extension API Server." It tells Kubernetes how to handle external metrics.
+
+```
 kubectl get apiservice | grep v1beta1.external.metrics.k8s.io
 ```
 
 Success Criteria: The output should show v1beta1.external.metrics.k8s.io with the status Available = True. If this is missing or False, the KEDA metrics server cannot communicate with the Kubernetes HPA (Horizontal Pod Autoscaler).
 
-#### Step 4: Functional Scaling Test (The "Dry Run")
+## Step 4: Functional Scaling Test (The "Dry Run")
+
 We will create a test deployment and a KEDA ScaledObject that uses a simple "cron" trigger to verify KEDA can actually command the cluster to scale.
 
 1. Create a dummy deployment:
 
-```Bash
+```
 kubectl create deployment keda-test-app --image=nginx
 ```
+
 2. Apply a KEDA ScaledObject (Schedules 5 replicas every minute):
 Save this as test-keda.yaml and run kubectl apply -f test-keda.yaml:
 
@@ -72,9 +74,11 @@ spec:
       end: 59 * * * * # End of every hour
       desiredReplicas: "5"
 ```
+
 3. Watch the scaling happen:
 
-```Bash
+```
 kubectl get pods -l app=keda-test-app -w
 ```
+
 Success Criteria: You should see the pod count jump from 1 to 5.

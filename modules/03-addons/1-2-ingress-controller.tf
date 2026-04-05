@@ -7,7 +7,7 @@ resource "time_sleep" "wait_for_lbc" {
   create_duration = "30s"
 }
 
-# Install NGINX Ingress Controller
+# Install NGINX Ingress Controller using Helm
 resource "helm_release" "nginx_ingress" {
   name             = "ingress-nginx"
   repository       = "https://kubernetes.github.io/ingress-nginx"
@@ -26,7 +26,6 @@ resource "helm_release" "nginx_ingress" {
   wait            = true
   wait_for_jobs   = true
 
-  # The magic happens in these annotations. They tell the AWS Load 
   # Balancer Controller to build a single, high-performance Network 
   # Load Balancer (NLB) to sit in front of NGINX.
   values = [
@@ -37,11 +36,11 @@ resource "helm_release" "nginx_ingress" {
         loadBalancerClass: "service.k8s.aws/nlb"
         
         annotations:
-          # Use the AWS Load Balancer Controller
+          # Use the AWS Load Balancer Controller configuration.
           service.beta.kubernetes.io/aws-load-balancer-type: "external"          
           service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"          
           service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing" # Public Facing
-          service.beta.kubernetes.io/aws-load-balancer-attributes: "load_balancing.cross_zone.enabled=true"          # Recommended for NLB stability
+          service.beta.kubernetes.io/aws-load-balancer-attributes: "load_balancing.cross_zone.enabled=true"
 
       # Make NGINX the default ingress class
       ingressClassResource:

@@ -1,7 +1,7 @@
 ##### cert-manager starts here #####
 # Cert-manager is a Kubernetes add-on that automates the management and issuance of TLS certificates from various issuing sources. It helps secure your applications by ensuring they have valid TLS certificates, which are essential for encrypted communication.
 
-# Install the cert-manager Helm Chart
+# Install the cert-manager using Helm Chart
 resource "helm_release" "cert_manager" {
   name             = "cert-manager"
   repository       = "https://charts.jetstack.io"
@@ -21,7 +21,6 @@ resource "helm_release" "cert_manager" {
   wait            = true
   wait_for_jobs   = true
 
-  # CRITICAL SETTING: Install Custom Resource Definitions (CRDs)
   # cert-manager relies on custom Kubernetes objects like 'Certificates' 
   # and 'ClusterIssuers'. This flag tells Helm to install them.
   values = [
@@ -33,9 +32,7 @@ resource "helm_release" "cert_manager" {
   ]
 }
 
-
 # configure let's encrypt cluster issuer
-
 resource "kubectl_manifest" "cluster_issuer_letsencrypt_prod" {
   yaml_body = yamlencode({
     apiVersion = "cert-manager.io/v1"
@@ -46,7 +43,7 @@ resource "kubectl_manifest" "cluster_issuer_letsencrypt_prod" {
     spec = {
       acme = {
         server = "https://acme-v02.api.letsencrypt.org/directory"
-        email  = "admin@devsecopsguru.in" # Update this if you prefer a different alert email
+        email  = "admin@devsecopsguru.in"
         privateKeySecretRef = {
           name = "letsencrypt-prod"
         }

@@ -1,5 +1,6 @@
-# Root Terragrunt Configuration
-# This tells Terragrunt: "No matter where I am, put the cache in C:/temp/tg"
+# Root Terragrunt Configuration it will be applied to all the modules of terraform directories
+
+# Configuring cache folder in C:/temp/tg"
 download_dir = "C:/temp/tg"
 
 locals {
@@ -13,7 +14,7 @@ locals {
   cluster_name = local.env_vars.locals.cluster_name
 }
 
-# Generate the provider file dynamically
+# Generate the provider file dynamically to all the modules terraform directories
 generate "provider" {
   path      = "provider.tf"
   if_exists = "overwrite_terragrunt"
@@ -51,7 +52,7 @@ data "aws_eks_cluster_auth" "cluster" {
   name = "${local.cluster_name}"
 }
 
-# Kubernetes dependent providers
+# Kubernetes dependent providers to install addons
 provider "kubernetes" {
   host                   = data.aws_eks_cluster.cluster.endpoint
   cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
@@ -85,14 +86,14 @@ terraform {
 }
 %{endif}
 
-# AWS provider (Applied to all modules)
+# AWS provider applied to all modules terraform directories
 provider "aws" {
   region = "${local.aws_region}"
   default_tags {
     tags = {
-      Project     = "EKS-Upgrade-lab-Setup"
-      Environment = "sandbox"
-      ManagedBy   = "Terraform"
+      Project     = "${local.cluster_name}-lab-Setup"
+      Environment = "Learning"
+      ManagedBy   = "Terragrunt"
       CostCenter  = "Learning"
     }
   }

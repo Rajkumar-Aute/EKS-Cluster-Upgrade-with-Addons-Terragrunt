@@ -29,19 +29,13 @@ resource "aws_route53_zone" "subdomain" {
 
 ##### ExternalDNS starts here #####
 # Create the IAM Role and Policy for ExternalDNS
-# Need domain name in route53 to filter the access of external dns to only the relevant hosted zone
 module "external_dns_irsa_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
   version = "~> 5.30"
 
   role_name        = "${var.cluster_name}-external-dns"
   role_name_prefix = null
-
-
-  # This built-in flag automatically attaches the AWS-managed policy for Route53 access
   attach_external_dns_policy = true
-
-  # Tie the IAM role securely to the specific Kubernetes ServiceAccount
   oidc_providers = {
     main = {
       provider_arn               = var.oidc_provider_arn
@@ -50,7 +44,7 @@ module "external_dns_irsa_role" {
   }
 }
 
-# Install the ExternalDNS Helm Chart
+# Install the ExternalDNS using Helm Chart
 resource "helm_release" "external_dns" {
   name       = "external-dns"
   repository = "https://kubernetes-sigs.github.io/external-dns/"
@@ -77,7 +71,6 @@ resource "helm_release" "external_dns" {
     domainFilters:
       - var.domain_name
     zoneIdFilters:
-      # THE CHANGE: Point directly to the resource in this folder
       - ${aws_route53_zone.subdomain.zone_id} 
     serviceAccount:
       create: true
@@ -93,7 +86,6 @@ resource "helm_release" "external_dns" {
 }
 
 ##### ExternalDNS ends here #####
-
 
 
 # Verify the AWS Side (Route53 & IAM)

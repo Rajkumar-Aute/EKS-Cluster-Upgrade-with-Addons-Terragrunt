@@ -6,7 +6,6 @@ variable "aws_lbc_version" {
   type        = string
 }
 
-
 # Create the IAM Role and Policy for the Load Balancer Controller
 module "aws_load_balancer_controller_irsa_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
@@ -15,8 +14,9 @@ module "aws_load_balancer_controller_irsa_role" {
   role_name        = "${var.cluster_name}-aws-lbc"
   role_name_prefix = null
 
-  # This boolean tells the module to attach the official AWS Load Balancer Controller IAM policy
+  # Attach the AWS Load Balancer Controller IAM policy
   attach_load_balancer_controller_policy = true
+  # Destroy by terraform when the module is removed, preventing orphaned policies.
   force_detach_policies                  = true
 
   # Tie the IAM role securely to the specific Kubernetes ServiceAccount in the kube-system namespace
@@ -28,7 +28,7 @@ module "aws_load_balancer_controller_irsa_role" {
   }
 }
 
-# Install the AWS Load Balancer Controller using Helm Chart
+# Install the AWS Load Balancer Controller
 resource "helm_release" "aws_load_balancer_controller" {
   name       = "aws-load-balancer-controller"
   repository = "https://aws.github.io/eks-charts"
@@ -36,28 +36,40 @@ resource "helm_release" "aws_load_balancer_controller" {
   namespace  = "kube-system"
   version    = var.aws_lbc_version
 
+  # Reliability flags:
+  #  Automatically roll back to the previous version if the upgrade fails.
   atomic          = true
+  # Deletes new resources created during a failed deployment
   cleanup_on_fail = true
+  # Forces resource updates through replacement if in-place updates fail.
   force_update    = true
+  # Runs 'helm lint' before deployment to catch syntax errors in the chart.
   lint            = true
+  # Restarts pods on upgrade to ensure they pick up new configurations or secrets.
   recreate_pods   = true
+  # Reuse a release name if the previous one is stuck in a bad state.
   replace         = true
+  # Gives the controller pods time to start and report as "Ready".
   timeout         = 600
+  # Tells Terraform to wait until all resources are in a ready state before continuing.
   wait            = true
+  # Ensures any pre-install or post-install Helm hooks complete successfully.
   wait_for_jobs   = true
 
-
-  # Pass the cluster name and the newly created IAM role ARN to the Helm chart
+  # This values block translates to the customized values.yaml file used by Helm.
   values = [
     <<-EOT
     clusterName: ${var.cluster_name}
     serviceAccount:
       create: true
       name: aws-load-balancer-controller
+      # This annotation is the critical link between Kubernetes and AWS IAM.
+      # It tells the pod which IAM Role to assume using the OIDC provider.
       annotations:
         eks.amazonaws.com/role-arn: ${module.aws_load_balancer_controller_irsa_role.iam_role_arn}
     EOT
   ]
+  
   depends_on = [
     module.aws_load_balancer_controller_irsa_role
   ]
@@ -66,6 +78,7 @@ resource "helm_release" "aws_load_balancer_controller" {
 
 # The Auto-Cleanup Resource
 resource "null_resource" "eks_deep_cleanup" {
+  # Triggers act as a state cache. During a 'destroy' operation, Terraform might lose access 
   triggers = {
     cluster_name = var.cluster_name
     region       = var.aws_region
@@ -76,13 +89,13 @@ resource "null_resource" "eks_deep_cleanup" {
     command = <<EOT
       echo "--- Starting Mandatory EKS Cleanup ---"
 
-      # 1. Kubernetes Level: Delete Load Balancers (ALB/NLB)
+      # Kubernetes Level: Delete Load Balancers (ALB/NLB)
+      # By deleting Ingresses and external Services, we signal the Load Balancer Controller to delete the associated ALBs/NLBs in AWS before the controller itself is destroyed.
       echo "Deleting K8s Ingress and Services..."
       kubectl delete ingress --all --all-namespaces --ignore-not-found
       kubectl delete service -l service.beta.kubernetes.io/aws-load-balancer-type=external --all-namespaces --ignore-not-found
       
-      # 1.5 AWS Level: Target Group Cleanup (NEW)
-      # These often stay behind even after the Load Balancer is gone
+      # Orphaned Target Groups prevent VPC subnets and Security Groups from being deleted.
       echo "Cleaning up orphaned Target Groups for cluster: ${self.triggers.cluster_name}..."
       TG_ARNS=$(aws elbv2 describe-target-groups --region ${self.triggers.region} --query "TargetGroups[?contains(TargetGroupName, 'k8s-')].TargetGroupArn" --output text)
       for tg in $TG_ARNS; do
@@ -90,7 +103,8 @@ resource "null_resource" "eks_deep_cleanup" {
         aws elbv2 delete-target-group --region ${self.triggers.region} --target-group-arn $tg || echo "Target group $tg already gone."
       done
 
-      # 2. ASG Level: Scale to Zero
+      # If Terraform deletes an EC2 node, the Auto Scaling Group will immediately try to spin up a new one.
+      # This new node will grab a subnet IP and prevent the VPC from being destroyed. Scaling to 0 stops this loop.
       echo "Scaling Auto Scaling Groups to 0..."
       ASG_NAMES=$(aws autoscaling describe-auto-scaling-groups --region ${self.triggers.region} --query "AutoScalingGroups[?contains(AutoScalingGroupName, '${self.triggers.cluster_name}')].AutoScalingGroupName" --output text)
       for asg in $ASG_NAMES; do
@@ -98,7 +112,7 @@ resource "null_resource" "eks_deep_cleanup" {
         echo "Scaled $asg to zero."
       done
 
-      # 3. EC2 Level: Delete Orphaned Launch Templates
+      # Delete Orphaned Launch Templates EKS Managed Node Groups often generate hidden launch templates that Terraform doesn't track in its state file.
       echo "Deleting related Launch Templates..."
       LT_IDS=$(aws ec2 describe-launch-templates --region ${self.triggers.region} --query "LaunchTemplates[?contains(LaunchTemplateName, '${self.triggers.cluster_name}')].LaunchTemplateId" --output text)
       for lt in $LT_IDS; do
@@ -106,15 +120,13 @@ resource "null_resource" "eks_deep_cleanup" {
         echo "Deleted Launch Template: $lt"
       done
 
-      # 4. Finalizer Cleanup (Safety Net)
-      # Removes the 'blocker' so Kubernetes allows the namespace to delete
+      # Finalizer Cleanup. If the Load Balancer Controller pods die before they finish deleting the ALBs, Kubernetes will keep the Ingress objects in a "Terminating" state forever due to finalizers, which hangs the whole Terraform destroy process.
       echo "Force-clearing stuck finalizers..."
       kubectl get ingress -A -o json | jq -r '.items[] | [.metadata.name, .metadata.namespace] | @tsv' | while read name ns; do
         kubectl patch ingress $name -n $ns -p '{"metadata":{"finalizers":[]}}' --type=merge --ignore-not-found
       done
 
-      # 5. Network Level: ENI Cleanup (The Final Boss)
-      # Often left by VPC-CNI or LBC; blocks Subnet deletion
+      # ENI Cleanup. The AWS VPC-CNI creates Elastic Network Interfaces directly on EC2 instances.
       echo "Detecting orphaned Network Interfaces..."
       ENI_IDS=$(aws ec2 describe-network-interfaces --region ${self.triggers.region} --filters "Name=description,Values=*${self.triggers.cluster_name}*" --query "NetworkInterfaces[*].NetworkInterfaceId" --output text)
       for eni in $ENI_IDS; do
@@ -128,7 +140,6 @@ resource "null_resource" "eks_deep_cleanup" {
 }
 
 ##### AWS Load Balancer Controller ends here #####
-
 
 
 # Check the ServiceAccount Annotation:
