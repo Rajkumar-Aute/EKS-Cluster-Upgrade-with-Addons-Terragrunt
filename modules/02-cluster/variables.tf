@@ -24,18 +24,21 @@ variable "subnet_ids" {
 }
 
 variable "min_node_groups_nodes" {
-  description = "The minimum number of nodes for the EKS cluster"
+  description = "The minimum number of worker nodes for the EKS cluster"
   type        = number
+  default = 1
 }
 
 variable "max_node_groups_nodes" {
-  description = "The maximum number of nodes for the EKS cluster"
+  description = "The maximum number of worker nodes for the EKS cluster"
   type        = number
+  default = 3
 }
 
 variable "desired_node_groups_nodes" {
-  description = "The desired number of nodes for the EKS cluster"
+  description = "The desired number of worker nodes for the EKS cluster"
   type        = number
+  default = 2
 }
 
 variable "eks_capacity_type" {
@@ -47,5 +50,4 @@ variable "eks_capacity_type" {
 variable "eks_instance_types" {
   description = "A list of EC2 instance types for the EKS node group"
   type        = list(string)
-
 }

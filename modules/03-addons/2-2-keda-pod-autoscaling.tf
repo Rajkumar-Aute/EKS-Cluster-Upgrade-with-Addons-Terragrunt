@@ -1,11 +1,15 @@
 ##### KEDA ends here #####
 # KEDA (Kubernetes Event-driven Autoscaling)
+resource "time_sleep" "wait_for_lbc_for_keda" {
+  depends_on      = [helm_release.aws_load_balancer_controller]
+  create_duration = "30s"
+}
 
 # IAM Role for KEDA Operator (IRSA)
 # This allows KEDA to read metrics from AWS (SQS, CloudWatch, etc.)
 module "keda_irsa_role" {
-  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "~> 5.0"
+  source    = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version   = "~> 5.0"
   role_name = "${var.cluster_name}-keda-operator"
 
   oidc_providers = {
@@ -22,7 +26,7 @@ module "keda_irsa_role" {
   }
 }
 
-# Install KEDA via Helm
+# Install KEDA using Helm
 resource "helm_release" "keda" {
   name             = "keda"
   repository       = "https://kedacore.github.io/charts"
@@ -51,7 +55,6 @@ resource "helm_release" "keda" {
         }
       }
 
-      # Operator Settings
       operator = {
         replicaCount = 1
       }
@@ -62,7 +65,10 @@ resource "helm_release" "keda" {
     })
   ]
 
-  depends_on = [module.keda_irsa_role]
+  depends_on = [
+    module.keda_irsa_role,
+    helm_release.aws_load_balancer_controller, 
+  ]
 }
 
 ##### KEDA ends here #####

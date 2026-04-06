@@ -7,7 +7,6 @@ module "external_secrets_irsa_role" {
 
   role_name = "${var.cluster_name}-external-secrets"
 
-  # The module has a built-in policy specifically for ESO!
   # This grants read-only access to AWS Secrets Manager and SSM Parameter Store.
   attach_external_secrets_policy = true
 
@@ -19,7 +18,7 @@ module "external_secrets_irsa_role" {
   }
 }
 
-# Install the external secrets helm chart
+# Install the external secrets using helm chart
 resource "helm_release" "external_secrets" {
   name             = "external-secrets"
   repository       = "https://charts.external-secrets.io"
@@ -38,7 +37,6 @@ resource "helm_release" "external_secrets" {
   wait            = true
   wait_for_jobs   = true
 
-  # Use values to install CRDs and attach the IAM role we just created
   values = [
     <<-EOT
     installCRDs: true
@@ -52,10 +50,7 @@ resource "helm_release" "external_secrets" {
 
 }
 
-
 # configure the aws cluster secret store
-
-# the secret store
 resource "kubectl_manifest" "aws_cluster_secret_store" {
   yaml_body = yamlencode({
     apiVersion = "external-secrets.io/v1beta1"
@@ -81,14 +76,11 @@ resource "kubectl_manifest" "aws_cluster_secret_store" {
     }
   })
 
-  # This is the secret sauce for automation: 
-  # It waits for Helm to finish, but doesn't crash during 'plan'
   depends_on = [helm_release.external_secrets]
 }
 
 
 # the ssm store
-
 resource "kubectl_manifest" "aws_ssm_parameter_store" {
   yaml_body = yamlencode({
     apiVersion = "external-secrets.io/v1beta1"

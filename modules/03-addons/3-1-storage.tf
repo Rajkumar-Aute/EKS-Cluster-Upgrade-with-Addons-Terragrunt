@@ -1,6 +1,6 @@
 
 ##### Storage Classes start here #####
-# IAM ROLE FOR THE EBS CSI DRIVER
+# IAM role for the EBS CSI driver
 module "ebs_csi_irsa_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
   version = "~> 5.30"
@@ -16,8 +16,7 @@ module "ebs_csi_irsa_role" {
   }
 }
 
-
-# INSTALL THE EBS CSI DRIVER ADD-ON
+# Install the EBS CSI Driver add-on
 resource "aws_eks_addon" "ebs_csi_driver" {
   cluster_name = var.cluster_name
   addon_name   = "aws-ebs-csi-driver"
@@ -28,11 +27,7 @@ resource "aws_eks_addon" "ebs_csi_driver" {
   resolve_conflicts_on_update = "OVERWRITE"
 }
 
-
-
-
-# PATCH GP2 TO REMOVE DEFAULT STATUS
-
+# patch GP2 to remove default status and make GP3 default
 resource "kubernetes_annotations" "disable_gp2_default" {
   api_version = "storage.k8s.io/v1"
   kind        = "StorageClass"
@@ -46,13 +41,10 @@ resource "kubernetes_annotations" "disable_gp2_default" {
     "storageclass.kubernetes.io/is-default-class" = "false"
   }
 
-  # This dependency will now successfully find the addon resource above!
   depends_on = [aws_eks_addon.ebs_csi_driver]
 }
 
-
-# CREATE GP3 AND MAKE IT DEFAULT
-
+# create GP3 and make it default
 resource "kubernetes_storage_class_v1" "gp3" {
   metadata {
     name = "gp3"
